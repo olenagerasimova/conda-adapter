@@ -1,2 +1,2 @@
 # conda-adapter
-Conda repository adapter
+[Conda](https://docs.conda.io/en/latest/) repository adapter.
