@@ -1,0 +1,10 @@
+target/
+.idea/
+*.iml
+.DS_Store
+.settings/**
+.classpath
+.project
+src/test/resources-binary/
+.factorypath
+*.tar.gz
