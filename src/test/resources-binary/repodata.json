@@ -1,0 +1,30 @@
+{
+  "packages" : {
+    "super-fun-package-0.1.0-py37_0.tar.bz2" : {
+      "build" : "py37_0",
+      "build_number" : 0,
+      "depends" : [ "some-depends" ],
+      "license" : "BSD",
+      "md5" : "a75683f8d9f5b58c19a8ec5d0b7f796e",
+      "name" : "super-fun-package",
+      "sha256" : "1fe3c3f4250e51886838e8e0287e39029d601b9f493ea05c37a2630a9fe5810f",
+      "size" : 3832,
+      "subdir" : "win-64",
+      "timestamp" : 1530731681870,
+      "version" : "0.1.0"
+    }
+  },
+  "super-fun-package-0.2.0-py37_0.tar.bz2" : {
+    "build" : "py37_0",
+    "build_number" : 0,
+    "depends" : [ "some-depends" ],
+    "license" : "BSD",
+    "md5" : "abc123",
+    "name" : "super-fun-package",
+    "sha256" : "xyx123",
+    "size" : 3832,
+    "subdir" : "win-64",
+    "timestamp" : 1530731681870,
+    "version" : "0.2.0"
+  }
+}
