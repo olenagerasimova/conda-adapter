@@ -7,7 +7,6 @@ package com.artipie.conda.meta;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
@@ -64,14 +63,13 @@ public interface JsonMaid {
                     && (this.parser.getCurrentName().endsWith("tar.bz2")
                         || this.parser.getCurrentName().endsWith(".conda"))) {
                     final String name = this.parser.getCurrentName();
+                    this.parser.nextToken();
                     this.parser.setCodec(new ObjectMapper());
-                    final JsonNode next = this.parser.<ObjectNode>readValueAsTree()
-                        .elements().next();
-                    if (!checksums.contains(next.get("sha256").asText())) {
+                    final ObjectNode nodes = this.parser.<ObjectNode>readValueAsTree();
+                    if (!checksums.contains(nodes.get("sha256").asText())) {
                         this.gnrt.writeFieldName(name);
                         this.gnrt.setCodec(new ObjectMapper());
-                        this.gnrt.writeTree(next);
-                        this.gnrt.writeEndObject();
+                        this.gnrt.writeTree(nodes);
                     }
                 }
             }
