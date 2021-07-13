@@ -5,6 +5,5 @@ target/
 .settings/**
 .classpath
 .project
-src/test/resources-binary/
 .factorypath
 *.tar.gz
