@@ -5,7 +5,6 @@
 package com.artipie.conda.meta;
 
 import com.artipie.asto.test.TestResource;
-import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,7 +25,7 @@ class JsonMaidTest {
         final JsonFactory factory = new JsonFactory();
         final TestResource resource = new TestResource("repodata.json");
         new JsonMaid.Jackson(
-            factory.createGenerator(stream, JsonEncoding.UTF8).useDefaultPrettyPrinter(),
+            factory.createGenerator(stream).useDefaultPrettyPrinter(),
             factory.createParser(resource.asInputStream())
         ).clean(Collections.emptySet());
         MatcherAssert.assertThat(
