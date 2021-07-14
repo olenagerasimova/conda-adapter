@@ -4,10 +4,13 @@
  */
 package com.artipie.conda;
 
+import com.artipie.asto.ArtipieIOException;
+import com.artipie.conda.meta.JsonMaid;
+import com.fasterxml.jackson.core.JsonFactory;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import org.apache.commons.lang3.NotImplementedException;
+import java.util.Set;
 
 /**
  * Conda repository repodata.
@@ -46,11 +49,18 @@ public interface CondaRepodata {
         /**
          * Removes items from repodata json.
          * @param checksums List of the checksums of the packages to remove.
+         * @throws ArtipieIOException On IO errors
          */
-        public void perform(final Collection<String> checksums) {
-            throw new NotImplementedException("Not implemented yet");
+        public void perform(final Set<String> checksums) {
+            final JsonFactory factory = new JsonFactory();
+            try {
+                new JsonMaid.Jackson(
+                    factory.createGenerator(this.out), factory.createParser(this.input)
+                ).clean(checksums);
+            } catch (final IOException err) {
+                throw new ArtipieIOException(err);
+            }
         }
-
     }
 
 }
