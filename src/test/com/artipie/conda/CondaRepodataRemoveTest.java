@@ -10,9 +10,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import org.cactoos.set.SetOf;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.core.IsEqual;
+import org.json.JSONException;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * Test for {@link CondaRepodata.Remove}.
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 class CondaRepodataRemoveTest {
 
     @Test
-    void removesPackagesInfo() throws IOException {
+    void removesPackagesInfo() throws IOException, JSONException {
         try (InputStream input = new TestResource("repodata.json").asInputStream()) {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             new CondaRepodata.Remove(input, out).perform(
@@ -32,44 +32,42 @@ class CondaRepodataRemoveTest {
                     "47d6dd01a1cff52af31804bbfffb4341fd8676c75d00d120cc66d9709e78ea7f"
                 )
             );
-            MatcherAssert.assertThat(
+            JSONAssert.assertEquals(
                 out.toString(),
-                new IsEqual<>(
-                    String.join(
-                        "",
-                        "{",
-                        "\"packages\":{",
-                        "\"decorator-4.2.1-py27_0.tar.bz2\":{",
-                        "\"build\":\"py27_0\",",
-                        "\"build_number\":0,",
-                        "\"depends\":[\"python >=2.7,<2.8.0a0\"],",
-                        "\"license\":\"BSD 3-Clause\",",
-                        "\"md5\":\"0ebe0cb0d62eae6cd237444ba8fded66\",",
-                        "\"name\":\"decorator\",",
-                        // @checkstyle LineLengthCheck (1 line)
-                        "\"sha256\":\"b5f77880181b37fb2e180766869da6242648aaec5bdd6de89296d9dacd764c14\",",
-                        "\"size\":15638,",
-                        "\"subdir\":\"linux-64\",",
-                        "\"timestamp\":1516376429792,",
-                        "\"version\":\"4.2.1\"",
-                        "}}",
-                        ",\"packages.conda\":{}}"
-                    )
-                )
+                String.join(
+                    "",
+                    "{",
+                    "\"packages\":{",
+                    "\"decorator-4.2.1-py27_0.tar.bz2\":{",
+                    "\"build\":\"py27_0\",",
+                    "\"build_number\":0,",
+                    "\"depends\":[\"python >=2.7,<2.8.0a0\"],",
+                    "\"license\":\"BSD 3-Clause\",",
+                    "\"md5\":\"0ebe0cb0d62eae6cd237444ba8fded66\",",
+                    "\"name\":\"decorator\",",
+                    // @checkstyle LineLengthCheck (1 line)
+                    "\"sha256\":\"b5f77880181b37fb2e180766869da6242648aaec5bdd6de89296d9dacd764c14\",",
+                    "\"size\":15638,",
+                    "\"subdir\":\"linux-64\",",
+                    "\"timestamp\":1516376429792,",
+                    "\"version\":\"4.2.1\"",
+                    "}}",
+                    ",\"packages.conda\":{}}"
+                ),
+                true
             );
         }
     }
 
     @Test
-    void doesNothingIfGivenFileIsEmpty() {
+    void doesNothingIfGivenFileIsEmpty() throws JSONException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final String file = "{\"packages\":{}}";
         new CondaRepodata.Remove(
             new ByteArrayInputStream(file.getBytes()), out
         ).perform(new SetOf<>("abc123", "xyx098"));
-        MatcherAssert.assertThat(
-            out.toString(),
-            new IsEqual<>(file)
+        JSONAssert.assertEquals(
+            out.toString(), file, true
         );
     }
 
