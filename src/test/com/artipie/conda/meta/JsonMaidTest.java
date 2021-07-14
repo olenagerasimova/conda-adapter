@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
  * Test for {@link JsonMaid.Jackson}.
  * @since 0.1
  */
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
 class JsonMaidTest {
 
     @Test
@@ -165,7 +165,6 @@ class JsonMaidTest {
             factory.createGenerator(stream).useDefaultPrettyPrinter(),
             factory.createParser(resource.asInputStream())
         ).clean(new SetOf<String>("098"));
-        final String res = stream.toString();
         MatcherAssert.assertThat(
             stream.toByteArray(),
             new IsEqual<>(resource.asBytes())
@@ -234,6 +233,7 @@ class JsonMaidTest {
             "    \"pyqt-5.6.0-py36h0386399_5.tar.bz2\" : {",
             "      \"build\" : \"py36h0386399_5\",",
             "      \"build_number\" : 5,",
+            // @checkstyle LineLengthCheck (1 line)
             "      \"depends\" : [ \"dbus >=1.10.22,<2.0a0\", \"libgcc-ng >=7.2.0\", \"libstdcxx-ng >=7.2.0\", \"python >=3.6,<3.7.0a0\", \"qt 5.6.*\", \"sip 4.18.*\" ],",
             "      \"license\" : \"Commercial, GPL-2.0, GPL-3.0\",",
             "      \"license_family\" : \"GPL\",",
@@ -263,6 +263,7 @@ class JsonMaidTest {
             "      \"app_type\" : \"web\",",
             "      \"build\" : \"py38_0\",",
             "      \"build_number\" : 0,",
+            // @checkstyle LineLengthCheck (1 line)
             "      \"depends\" : [ \"argon2-cffi\", \"ipykernel\", \"ipython_genutils\", \"jinja2\", \"send2trash\", \"terminado >=0.8.1\", \"tornado >=5.0\", \"traitlets >=4.2.1\" ],",
             "      \"icon\" : \"df7feebede9861a203b480c119e38b49.png\",",
             "      \"license\" : \"BSD-3-Clause\",",
