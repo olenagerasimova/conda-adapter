@@ -52,6 +52,26 @@ list of the packages metadata in platform directory and subdir where package is 
       "timestamp": 1530731681870,
       "version": "0.1.0"
     }
+  },
+  "packages.conda": {
+    "super-fun-package-0.2.0-py37_0.conda": {
+      "build": "py37_0",
+      "build_number": 0,
+      "depends": [
+        "some-depends"
+      ],
+      "license": "BSD",
+      "md5": "a75683f8d9f5b58c19a8ec5d0b7f797e",
+      "name": "super-fun-package",
+      "sha256": "1fe3c3f4250e51886838e8e0287e39029d601b9f493ea05c37a2630a9fe5811f",
+      "size": 3832,
+      "subdir": "win-64",
+      "timestamp": 1530731681860,
+      "version": "0.2.0"
+    }
   }
 }
 ```
+`tar.bz2` packages are listed under `packages` element, `.conda` packages are listed under 
+`packages.conda` element. `Repodata.json` can also contain some other info 
+(for example, subdir name) on the root level.
