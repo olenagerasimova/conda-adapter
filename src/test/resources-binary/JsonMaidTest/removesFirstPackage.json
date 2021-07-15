@@ -1,19 +1,5 @@
 {
   "packages" : {
-    "cram-0.7-py36_1.tar.bz2" : {
-      "build" : "py36_1",
-      "build_number" : 1,
-      "depends" : [ "python >=3.6,<3.7.0a0" ],
-      "license" : "GPL-2.0",
-      "license_family" : "GPL2",
-      "md5" : "609e6545899d1d098f4160dd98fbc74d",
-      "name" : "cram",
-      "sha256" : "4b36cb59651f6218449bd71a7d37182f062f545240b502eebed319f77fa54b08",
-      "size" : 40151,
-      "subdir" : "linux-64",
-      "timestamp" : 1539182927005,
-      "version" : "0.7"
-    },
     "decorator-4.2.1-py27_0.tar.bz2" : {
       "build" : "py27_0",
       "build_number" : 0,

@@ -54,12 +54,10 @@ public interface JsonMaid {
         @Override
         @SuppressWarnings("PMD.AssignmentInOperand")
         public void clean(final Set<String> checksums) throws IOException {
-            this.gnrt.writeStartObject();
-            this.gnrt.writeFieldName("packages");
-            this.gnrt.writeStartObject();
             JsonToken token;
             while ((token = this.parser.nextToken()) != null) {
                 if (token == JsonToken.FIELD_NAME
+                    && !"packages.conda".equals(this.parser.getCurrentName())
                     && (this.parser.getCurrentName().endsWith("tar.bz2")
                         || this.parser.getCurrentName().endsWith(".conda"))) {
                     final String name = this.parser.getCurrentName();
@@ -71,6 +69,8 @@ public interface JsonMaid {
                         this.gnrt.setCodec(new ObjectMapper());
                         this.gnrt.writeTree(nodes);
                     }
+                } else {
+                    this.gnrt.copyCurrentEvent(this.parser);
                 }
             }
             this.gnrt.close();

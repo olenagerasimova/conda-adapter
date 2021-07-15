@@ -10,9 +10,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import org.cactoos.set.SetOf;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.core.IsEqual;
+import org.json.JSONException;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * Test for {@link CondaRepodata.Remove}.
@@ -21,53 +21,53 @@ import org.junit.jupiter.api.Test;
 class CondaRepodataRemoveTest {
 
     @Test
-    void removesPackagesInfo() throws IOException {
+    void removesPackagesInfo() throws IOException, JSONException {
         try (InputStream input = new TestResource("repodata.json").asInputStream()) {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             new CondaRepodata.Remove(input, out).perform(
                 new SetOf<>(
-                    "1fe3c3f4250e51886838e8e0287e39029d601b9f493ea05c37a2630a9fe5810f", "xyx123"
+                    "4b36cb59651f6218449bd71a7d37182f062f545240b502eebed319f77fa54b08",
+                    "b37f144a5c2349b1c58ef17a663cb79086a1f2f49e35503e4f411f6f698cee1a",
+                    "be2a62bd5a3a6abda7f2309f4f2ddce7bededb40adb91341f18438b246d7fc7e",
+                    "47d6dd01a1cff52af31804bbfffb4341fd8676c75d00d120cc66d9709e78ea7f"
                 )
             );
-            MatcherAssert.assertThat(
+            JSONAssert.assertEquals(
                 out.toString(),
-                new IsEqual<>(
-                    String.join(
-                        "",
-                        "{",
-                        "\"packages\":{",
-                        "\"test-package-0.5.0-py36_0.conda\":{",
-                        "\"build\":\"py37_0\",",
-                        "\"build_number\":0,",
-                        "\"depends\":[\"some-depends\"],",
-                        "\"license\":\"BSD\",",
-                        "\"md5\":\"a75683f8d9f5b58c19a8ec5d0b7f786e\",",
-                        "\"name\":\"test-package\",",
-                        // @checkstyle LineLengthCheck (1 line)
-                        "\"sha256\":\"1fe3c3f4250e51886838e8e0287e39076d601b9f493ea05c37a2630a9fe5810f\",",
-                        "\"size\":123,",
-                        "\"subdir\":\"macOS\",",
-                        "\"timestamp\":153073163434,",
-                        "\"version\":\"0.5.0\"",
-                        "}",
-                        "}",
-                        "}"
-                    )
-                )
+                String.join(
+                    "",
+                    "{",
+                    "\"packages\":{",
+                    "\"decorator-4.2.1-py27_0.tar.bz2\":{",
+                    "\"build\":\"py27_0\",",
+                    "\"build_number\":0,",
+                    "\"depends\":[\"python >=2.7,<2.8.0a0\"],",
+                    "\"license\":\"BSD 3-Clause\",",
+                    "\"md5\":\"0ebe0cb0d62eae6cd237444ba8fded66\",",
+                    "\"name\":\"decorator\",",
+                    // @checkstyle LineLengthCheck (1 line)
+                    "\"sha256\":\"b5f77880181b37fb2e180766869da6242648aaec5bdd6de89296d9dacd764c14\",",
+                    "\"size\":15638,",
+                    "\"subdir\":\"linux-64\",",
+                    "\"timestamp\":1516376429792,",
+                    "\"version\":\"4.2.1\"",
+                    "}}",
+                    ",\"packages.conda\":{}}"
+                ),
+                true
             );
         }
     }
 
     @Test
-    void doesNothingIfGivenFileIsEmpty() {
+    void doesNothingIfGivenFileIsEmpty() throws JSONException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final String file = "{\"packages\":{}}";
         new CondaRepodata.Remove(
             new ByteArrayInputStream(file.getBytes()), out
         ).perform(new SetOf<>("abc123", "xyx098"));
-        MatcherAssert.assertThat(
-            out.toString(),
-            new IsEqual<>(file)
+        JSONAssert.assertEquals(
+            out.toString(), file, true
         );
     }
 
