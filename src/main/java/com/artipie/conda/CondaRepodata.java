@@ -67,7 +67,8 @@ public interface CondaRepodata {
     }
 
     /**
-     * Appends records about conda packages from repodata file.
+     * Appends records about conda packages to existing repodata file or creates
+     * new repodata with provided packages info.
      * Output/Input streams are not closed by this implementation, these operations should
      * be done from outside.
      * @since 0.2
@@ -75,7 +76,8 @@ public interface CondaRepodata {
     final class Append {
 
         /**
-         * Json repodata input stream.
+         * Optional json repodata input stream: if repodata does not exist, pass empty optional,
+         * new repodata file will be generated.
          */
         private final Optional<InputStream> input;
 
@@ -86,7 +88,7 @@ public interface CondaRepodata {
 
         /**
          * Ctor.
-         * @param input Json repodata input stream
+         * @param input Optional json repodata input stream
          * @param out Json repodata output
          */
         public Append(final Optional<InputStream> input, final OutputStream out) {
