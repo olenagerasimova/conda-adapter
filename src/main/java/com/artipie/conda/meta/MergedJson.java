@@ -86,13 +86,16 @@ public interface MergedJson {
                     // @checkstyle NestedIfDepthCheck (10 lines)
                     if (token == JsonToken.END_OBJECT) {
                         // @checkstyle InnerAssignmentCheck (1 line)
-                        if ((token = prsr.nextToken()) != null) {
+                        if ((token = prsr.nextToken()) != null && token != JsonToken.END_OBJECT) {
                             this.gnrt.writeEndObject();
                             this.processJsonToken(items, prsr, token, tars, condas);
                         }
                     } else {
                         this.processJsonToken(items, prsr, token, tars, condas);
                     }
+                }
+                if (tars.get() ^ condas.get()) {
+                    this.gnrt.writeEndObject();
                 }
                 if (!tars.get()) {
                     this.writePackagesItem(items, Jackson.PACKAGES, Jackson.TAR);
