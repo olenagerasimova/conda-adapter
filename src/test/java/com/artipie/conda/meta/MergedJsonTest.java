@@ -96,6 +96,32 @@ class MergedJsonTest {
         );
     }
 
+    @Test
+    void mergesPackage() throws IOException, JSONException {
+        final ByteArrayOutputStream res = new ByteArrayOutputStream();
+        final JsonFactory factory = new JsonFactory();
+        new MergedJson.Jackson(
+            factory.createGenerator(res).useDefaultPrettyPrinter(),
+            Optional.of(
+                factory.createParser(
+                    new TestResource("MergedJsonTest/mergesTarPackages_input.json").asInputStream()
+                )
+            )
+        ).merge(
+            new MapOf<String, JsonObject>(
+                this.packageItem("pyqt-5.6.0-py36h0386399_5.tar.bz2", "pyqt-tar.json")
+            )
+        );
+        JSONAssert.assertEquals(
+            new String(
+                new TestResource("MergedJsonTest/mergesTarPackages_output.json").asBytes(),
+                StandardCharsets.UTF_8
+            ),
+            res.toString(StandardCharsets.UTF_8.name()),
+            true
+        );
+    }
+
     private MapEntry<String, JsonObject> packageItem(final String filename, final String resourse) {
         return new MapEntry<String, JsonObject>(
             filename,
