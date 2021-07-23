@@ -106,7 +106,8 @@ class MergedJsonTest {
         "mp3_input.json,notebook-6.1.1-py38_0.conda,notebook-conda.json,mp3_output.json",
         "mp4_input.json,decorator-4.2.1-py27_0.tar.bz2,decorator-tar.json,mp4_output.json",
         "mp5_input.json,decorator-4.2.1-py27_0.tar.bz2,decorator-tar.json,mp3_output.json",
-        "mp6_input.json,notebook-6.1.1-py38_0.conda,notebook-conda.json,mp3_output.json"
+        "mp6_input.json,notebook-6.1.1-py38_0.conda,notebook-conda.json,mp3_output.json",
+        "mp7_input.json,decorator-4.2.1-py27_0.tar.bz2,decorator-tar.json,mp7_output.json"
     })
     // @checkstyle ParameterNumberCheck (5 lines)
     void mergesPackage(final String input, final String pkg, final String file, final String out)
@@ -142,7 +143,8 @@ class MergedJsonTest {
         "mps4_input.json,mps4_output.json",
         "mps5_input.json,mps5_output.json",
         "mps6_input.json,mps6_output.json",
-        "mps7_input.json,mps6_output.json"
+        "mps7_input.json,mps6_output.json",
+        "mps8_input.json,mps6_output.json"
     })
     void mergesPackages(final String input, final String out) throws IOException, JSONException {
         final ByteArrayOutputStream res = new ByteArrayOutputStream();
