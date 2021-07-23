@@ -5,15 +5,22 @@
 package com.artipie.conda;
 
 import com.artipie.asto.ArtipieIOException;
+import com.artipie.asto.misc.UncheckedIOFunc;
+import com.artipie.asto.misc.UncheckedIOScalar;
+import com.artipie.conda.meta.InfoIndex;
 import com.artipie.conda.meta.JsonMaid;
+import com.artipie.conda.meta.MergedJson;
 import com.fasterxml.jackson.core.JsonFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.NotImplementedException;
+import javax.json.Json;
+import javax.json.JsonObject;
 
 /**
  * Conda repository repodata.
@@ -116,11 +123,35 @@ public interface CondaRepodata {
         /**
          * Parses provided packages and appends metadata to the the provided `packages.json`.
          * @param packages Packages to add
+         * @throws ArtipieIOException On IO error
          */
         public void perform(final List<PackageItem> packages) {
-            throw new NotImplementedException("Not implemented yet");
+            final Map<String, JsonObject> items = new HashMap<>(packages.size());
+            for (final PackageItem pkg : packages) {
+                final InfoIndex mtd;
+                if (pkg.filename.endsWith(".conda")) {
+                    mtd = new InfoIndex.Conda(pkg.input);
+                } else {
+                    mtd = new InfoIndex.TarBz(pkg.input);
+                }
+                items.put(
+                    pkg.filename,
+                    Json.createObjectBuilder(new UncheckedIOScalar<>(mtd::json).value())
+                        .add("md5", pkg.md5)
+                        .add("sha256", pkg.sha256)
+                        .build()
+                );
+            }
+            final JsonFactory factory = new JsonFactory();
+            try {
+                new MergedJson.Jackson(
+                    factory.createGenerator(this.out),
+                    this.input.map(new UncheckedIOFunc<>(factory::createParser))
+                ).merge(items);
+            } catch (final IOException err) {
+                throw new ArtipieIOException(err);
+            }
         }
-
     }
 
     /**
