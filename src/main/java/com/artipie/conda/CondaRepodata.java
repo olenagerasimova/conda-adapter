@@ -6,7 +6,7 @@ package com.artipie.conda;
 
 import com.artipie.asto.ArtipieIOException;
 import com.artipie.asto.misc.UncheckedIOFunc;
-import com.artipie.asto.misc.UncheckedScalar;
+import com.artipie.asto.misc.UncheckedIOScalar;
 import com.artipie.conda.meta.InfoIndex;
 import com.artipie.conda.meta.JsonMaid;
 import com.artipie.conda.meta.MergedJson;
@@ -136,7 +136,7 @@ public interface CondaRepodata {
                 }
                 items.put(
                     pkg.filename,
-                    Json.createObjectBuilder(new UncheckedScalar<>(mtd::json).value())
+                    Json.createObjectBuilder(new UncheckedIOScalar<>(mtd::json).value())
                         .add("md5", pkg.md5)
                         .add("sha256", pkg.sha256)
                         .build()
