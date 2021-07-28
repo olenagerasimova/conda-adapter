@@ -15,3 +15,11 @@ This benchmark removes packages records from `repodata.json` file by provided li
 `sha256` checksum. `CondaRepodataRemoveBench` works with `com.artipie.conda.CondaRepodata.Remove` 
 class and requires `repodata.json` file in the test directory. Example file can be found 
 [here](https://artipie.s3.amazonaws.com/conda-test/conda-remove.tar.gz).
+
+### CondaRepodataAppendBench 
+
+This benchmark appends packages metadata to the provided `repodata.json` file. Duplicates are 
+replaced with newly added packages metadata. `CondaRepodataAppendBench` works with 
+`com.artipie.conda.CondaRepodata.Append` class, requires `repodata.json` file and conda packages 
+(`.tar.bz2` or `.conda`) in the test directory. Example test data resource can be found 
+[here](https://artipie.s3.amazonaws.com/conda-test/conda-append.tar.gz).
