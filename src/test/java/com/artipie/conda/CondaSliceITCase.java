@@ -9,6 +9,7 @@ import com.artipie.asto.Storage;
 import com.artipie.asto.memory.InMemoryStorage;
 import com.artipie.asto.test.TestResource;
 import com.artipie.conda.http.CondaSlice;
+import com.artipie.http.misc.RandomFreePort;
 import com.artipie.http.slice.LoggingSlice;
 import com.artipie.vertx.VertxSliceServer;
 import com.jcabi.log.Logger;
@@ -16,8 +17,11 @@ import io.vertx.reactivex.core.Vertx;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.commons.io.FileUtils;
 import org.cactoos.list.ListOf;
 import org.hamcrest.MatcherAssert;
+import org.hamcrest.core.IsEqual;
+import org.hamcrest.core.StringContains;
 import org.hamcrest.text.StringContainsInOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,17 +74,22 @@ public final class CondaSliceITCase {
     @BeforeEach
     void initialize() throws Exception {
         this.storage = new InMemoryStorage();
+        this.port = new RandomFreePort().get();
+        final String url = String.format("http://host.testcontainers.internal:%d", this.port);
         this.server = new VertxSliceServer(
             CondaSliceITCase.VERTX,
-            new LoggingSlice(new CondaSlice(this.storage))
+            new LoggingSlice(new CondaSlice(this.storage, url)),
+            this.port
         );
-        this.port = this.server.start();
+        this.server.start();
         Testcontainers.exposeHostPorts(this.port);
         Files.write(
             this.tmp.resolve(".condarc"),
-            String.format(
-                "channels:\n  - http://host.testcontainers.internal:%d/", this.port
-            ).getBytes()
+            String.format("channels:\n  - %s\nanaconda_upload: True", url).getBytes()
+        );
+        FileUtils.copyDirectory(
+            new TestResource("example-project").asPath().toFile(),
+            this.tmp.toFile()
         );
         this.cntn = new GenericContainer<>("continuumio/miniconda3:4.10.3")
             .withCommand("tail", "-f", "/dev/null")
@@ -105,6 +114,42 @@ public final class CondaSliceITCase {
                     "any's login successful"
                 )
             )
+        );
+    }
+
+    @Test
+    void canPublishWithCondaBuild() throws Exception {
+        this.exec("conda", "install", "-y", "conda-build");
+        this.exec("conda", "install", "-y", "conda-verify");
+        this.exec("conda", "install", "-y", "anaconda-client");
+        this.moveCondarc();
+        this.exec(
+            "anaconda", "config", "--set", "url",
+            String.format("http://host.testcontainers.internal:%d/", this.port),
+            "-s"
+        );
+        this.exec("conda", "config", "--set", "anaconda_upload", "yes");
+        MatcherAssert.assertThat(
+            "Login was not successful",
+            this.exec("anaconda", "login", "--username", "any", "--password", "any"),
+            new StringContains("any's login successful")
+        );
+        MatcherAssert.assertThat(
+            "Package was not installed successfully",
+            this.exec("conda", "build", "--output-folder", "./conda-out/", "./conda/"),
+            new StringContainsInOrder(
+                new ListOf<String>(
+                    "Creating package \"example-package\"", "Creating release \"0.0.1\"",
+                    // @checkstyle LineLengthCheck (1 line)
+                    "Uploading file \"any/example-package/0.0.1/linux-64/example-package-0.0.1-0.tar.bz2\"",
+                    "Upload complete", "conda package located at:"
+                )
+            )
+        );
+        MatcherAssert.assertThat(
+            "Package not found in storage",
+            this.storage.exists(new Key.From("linux-64/example-package-0.0.1-0.tar.bz2")).join(),
+            new IsEqual<>(true)
         );
     }
 
