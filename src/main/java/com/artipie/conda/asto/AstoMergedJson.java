@@ -10,7 +10,6 @@ import com.artipie.asto.Key;
 import com.artipie.asto.Storage;
 import com.artipie.asto.misc.UncheckedIOConsumer;
 import com.artipie.asto.misc.UncheckedIOFunc;
-import com.artipie.asto.misc.UncheckedIOScalar;
 import com.artipie.conda.meta.MergedJson;
 import com.fasterxml.jackson.core.JsonFactory;
 import java.io.IOException;
@@ -64,15 +63,16 @@ public final class AstoMergedJson {
             exists -> {
                 final CompletionStage<Void> future;
                 Optional<PipedInputStream> pis = Optional.empty();
+                Optional<PipedOutputStream> pos = Optional.empty();
                 try (PipedOutputStream outout = new PipedOutputStream()) {
                     if (exists) {
                         pis = Optional.of(new PipedInputStream());
                         final PipedInputStream val = pis.get();
+                        final PipedOutputStream out = new PipedOutputStream(val);
+                        pos = Optional.of(out);
                         future = this.asto.value(this.key).thenCompose(
-                            input -> new ReactiveOutputStream(
-                                new UncheckedIOScalar<>(() -> new PipedOutputStream(val))
-                                    .value()
-                            ).write(input, WriteGreed.SYSTEM));
+                            input -> new ReactiveOutputStream(out).write(input, WriteGreed.SYSTEM)
+                        );
                     } else {
                         future = CompletableFuture.allOf();
                         pis = Optional.empty();
@@ -97,6 +97,7 @@ public final class AstoMergedJson {
                     throw new ArtipieIOException(err);
                 } finally {
                     pis.ifPresent(new UncheckedIOConsumer<>(PipedInputStream::close));
+                    pos.ifPresent(new UncheckedIOConsumer<>(PipedOutputStream::close));
                 }
                 return future;
             }
