@@ -67,8 +67,7 @@ public final class AstoMergedJson {
                 try (PipedOutputStream outout = new PipedOutputStream()) {
                     if (exists) {
                         pis = Optional.of(new PipedInputStream());
-                        final PipedInputStream val = pis.get();
-                        final PipedOutputStream out = new PipedOutputStream(val);
+                        final PipedOutputStream out = new PipedOutputStream(pis.get());
                         pos = Optional.of(out);
                         future = this.asto.value(this.key).thenCompose(
                             input -> new ReactiveOutputStream(out).write(input, WriteGreed.SYSTEM)
