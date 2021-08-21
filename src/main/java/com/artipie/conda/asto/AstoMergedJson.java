@@ -76,14 +76,12 @@ public final class AstoMergedJson {
                         future = CompletableFuture.allOf();
                         pis = Optional.empty();
                     }
+                    final PipedInputStream src = new PipedInputStream(outout);
                     future.thenCompose(
-                        new UncheckedIOFunc<>(
-                            nothing -> this.asto.save(
-                                this.key,
-                                new Content.From(
-                                    new ReactiveInputStream(new PipedInputStream(outout))
-                                        .read(Buffers.Standard.K16)
-                                )
+                        nothing -> this.asto.save(
+                            this.key,
+                            new Content.From(
+                                new ReactiveInputStream(src).read(Buffers.Standard.K16)
                             )
                         )
                     );
