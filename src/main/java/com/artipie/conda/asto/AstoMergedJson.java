@@ -64,20 +64,21 @@ public final class AstoMergedJson {
                 final CompletionStage<Void> future;
                 Optional<PipedInputStream> pis = Optional.empty();
                 Optional<PipedOutputStream> pos = Optional.empty();
+                final CompletableFuture<Void> tmp;
                 try (PipedOutputStream outout = new PipedOutputStream()) {
                     if (exists) {
                         pis = Optional.of(new PipedInputStream());
                         final PipedOutputStream out = new PipedOutputStream(pis.get());
                         pos = Optional.of(out);
-                        future = this.asto.value(this.key).thenCompose(
+                        tmp = this.asto.value(this.key).thenCompose(
                             input -> new ReactiveOutputStream(out).write(input, WriteGreed.SYSTEM)
                         );
                     } else {
-                        future = CompletableFuture.allOf();
+                        tmp = CompletableFuture.allOf();
                         pis = Optional.empty();
                     }
                     final PipedInputStream src = new PipedInputStream(outout);
-                    future.thenCompose(
+                    future = tmp.thenCompose(
                         nothing -> this.asto.save(
                             this.key,
                             new Content.From(
