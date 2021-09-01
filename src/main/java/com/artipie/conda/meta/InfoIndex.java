@@ -6,6 +6,7 @@ package com.artipie.conda.meta;
 
 import com.artipie.ArtipieException;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.json.Json;
@@ -14,9 +15,9 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
+import org.apache.commons.io.IOUtils;
 
 /**
  * Conda package metadata file info/index.json.
@@ -59,8 +60,10 @@ public interface InfoIndex {
         @SuppressWarnings("PMD.AssignmentInOperand")
         public JsonObject json() throws IOException {
             try (
-                TarArchiveInputStream archive = new TarArchiveInputStream(
-                    new BZip2CompressorInputStream(this.input)
+                ArchiveInputStream archive = new ArchiveStreamFactory().createArchiveInputStream(
+                    new ByteArrayInputStream(
+                        IOUtils.toByteArray(new BZip2CompressorInputStream(this.input))
+                    )
                 )
             ) {
                 ArchiveEntry entry;
@@ -72,6 +75,8 @@ public interface InfoIndex {
                         return Json.createReader(archive).readObject();
                     }
                 }
+            } catch (final ArchiveException ex) {
+                throw new IOException(ex);
             }
             throw new ArtipieException("Illegal package .tar.bz2: info/index.json file not found");
         }
@@ -112,9 +117,12 @@ public interface InfoIndex {
                     }
                     final String name = entry.getName();
                     if (name.startsWith("info") && name.endsWith("tar.zst")) {
-                        final TarArchiveInputStream info = new TarArchiveInputStream(
-                            new ZstdCompressorInputStream(archive)
-                        );
+                        final ArchiveInputStream info = new ArchiveStreamFactory()
+                            .createArchiveInputStream(
+                                new ByteArrayInputStream(
+                                    IOUtils.toByteArray(new ZstdCompressorInputStream(archive))
+                                )
+                            );
                         while ((entry = info.getNextEntry()) != null) {
                             if (!info.canReadEntryData(entry) || entry.isDirectory()) {
                                 continue;
