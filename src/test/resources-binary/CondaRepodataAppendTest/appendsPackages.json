@@ -24,6 +24,7 @@
       "subdir": "linux-64",
       "timestamp": 1524671586445,
       "version": "1.8.4",
+      "size": 876,
       "md5": "conda-navi-md5",
       "sha256": "conda-navi-sha256"
     },
@@ -98,6 +99,7 @@
       "subdir": "win-64",
       "timestamp": 1619516322562,
       "version": "19.00",
+      "size": 123,
       "md5": "7zip-md5",
       "sha256": "7zip-sha256"
     },
