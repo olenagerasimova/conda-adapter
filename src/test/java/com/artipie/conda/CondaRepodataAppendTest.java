@@ -19,6 +19,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 /**
  * Test for {@link CondaRepodata.Remove}.
  * @since 0.1
+ * @checkstyle MagicNumberCheck (500 lines)
  */
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 class CondaRepodataAppendTest {
@@ -30,11 +31,12 @@ class CondaRepodataAppendTest {
             new ListOf<CondaRepodata.PackageItem>(
                 new CondaRepodata.PackageItem(
                     new TestResource("7zip-19.00-h59b6b97_2.conda").asInputStream(),
-                    "7zip-19.00-h59b6b97_2.conda", "7zip-sha256", "7zip-md5"
+                    "7zip-19.00-h59b6b97_2.conda", "7zip-sha256", "7zip-md5", 123L
                 ),
                 new CondaRepodata.PackageItem(
                     new TestResource("anaconda-navigator-1.8.4-py35_0.tar.bz2").asInputStream(),
-                    "anaconda-navigator-1.8.4-py35_0.tar.bz2", "conda-navi-sha256", "conda-navi-md5"
+                    "anaconda-navigator-1.8.4-py35_0.tar.bz2", "conda-navi-sha256",
+                    "conda-navi-md5", 876L
                 )
             )
         );
@@ -56,12 +58,12 @@ class CondaRepodataAppendTest {
                 new ListOf<CondaRepodata.PackageItem>(
                     new CondaRepodata.PackageItem(
                         new TestResource("7zip-19.00-h59b6b97_2.conda").asInputStream(),
-                        "7zip-19.00-h59b6b97_2.conda", "7zip-sha256", "7zip-md5"
+                        "7zip-19.00-h59b6b97_2.conda", "7zip-sha256", "7zip-md5", 123L
                     ),
                     new CondaRepodata.PackageItem(
                         new TestResource("anaconda-navigator-1.8.4-py35_0.tar.bz2").asInputStream(),
                         "anaconda-navigator-1.8.4-py35_0.tar.bz2",
-                        "conda-navi-sha256", "conda-navi-md5"
+                        "conda-navi-sha256", "conda-navi-md5", 876L
                     )
                 )
             );
