@@ -137,6 +137,7 @@ public interface CondaRepodata {
                 items.put(
                     pkg.filename,
                     Json.createObjectBuilder(new UncheckedIOScalar<>(mtd::json).value())
+                        .add("size", pkg.size)
                         .add("md5", pkg.md5)
                         .add("sha256", pkg.sha256)
                         .build()
@@ -184,20 +185,27 @@ public interface CondaRepodata {
         private final String md5;
 
         /**
+         * Package size.
+         */
+        private final long size;
+
+        /**
          * Ctor.
          * @param input Package input stream
          * @param filename Name of the file
          * @param sha256 Sha256 sum of the package
          * @param md5 Md5 sum of the package
+         * @param size Package size
          * @checkstyle ParameterNumberCheck (5 lines)
          * @checkstyle ParameterNameCheck (5 lines)
          */
         public PackageItem(final InputStream input, final String filename, final String sha256,
-            final String md5) {
+            final String md5, final long size) {
             this.input = input;
             this.filename = filename;
             this.sha256 = sha256;
             this.md5 = md5;
+            this.size = size;
         }
     }
 

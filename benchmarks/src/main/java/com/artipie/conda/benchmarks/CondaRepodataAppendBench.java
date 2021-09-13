@@ -87,7 +87,8 @@ public class CondaRepodataAppendBench {
         ).perform(
             this.pckg.stream().map(
                 item -> new CondaRepodata.PackageItem(
-                    new ByteArrayInputStream(item.input), item.filename, item.sha256, item.md5
+                    new ByteArrayInputStream(item.input), item.filename, item.sha256, item.md5,
+                    item.input.length
                 )
             ).collect(Collectors.toList())
         );
