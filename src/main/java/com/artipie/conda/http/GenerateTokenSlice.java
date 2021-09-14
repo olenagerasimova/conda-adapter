@@ -39,14 +39,14 @@ final class GenerateTokenSlice implements Slice {
     /**
      * Tokens.
      */
-    private final Map<String, String> tokens;
+    private final Map<String, Authentication.User> tokens;
 
     /**
      * Ctor.
      * @param auth Authentication
      * @param tokens Tokens
      */
-    GenerateTokenSlice(final Authentication auth, final Map<String, String> tokens) {
+    GenerateTokenSlice(final Authentication auth, final Map<String, Authentication.User> tokens) {
         this.auth = auth;
         this.tokens = tokens;
     }
@@ -60,7 +60,7 @@ final class GenerateTokenSlice implements Slice {
                     final Response res;
                     if (usr.user().isPresent()) {
                         final String token = RandomStringUtils.random(30, true, true);
-                        usr.user().map(user -> this.tokens.put(token, user.name()));
+                        usr.user().map(user -> this.tokens.put(token, user));
                         res = new RsJson(
                             () -> Json.createObjectBuilder().add("token", token).build(),
                             StandardCharsets.UTF_8
