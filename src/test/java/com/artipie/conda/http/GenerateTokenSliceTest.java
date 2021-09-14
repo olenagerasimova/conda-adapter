@@ -29,7 +29,7 @@ class GenerateTokenSliceTest {
 
     @Test
     void addsToken() {
-        final Map<String, String> tokens = new HashMap<>();
+        final Map<String, Authentication.User> tokens = new HashMap<>();
         final String name = "Alice";
         final String pswd = "wonderland";
         MatcherAssert.assertThat(

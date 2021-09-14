@@ -9,6 +9,7 @@ import com.artipie.asto.Storage;
 import com.artipie.asto.memory.InMemoryStorage;
 import com.artipie.asto.test.TestResource;
 import com.artipie.conda.http.CondaSlice;
+import com.artipie.http.auth.Authentication;
 import com.artipie.http.misc.RandomFreePort;
 import com.artipie.http.slice.LoggingSlice;
 import com.artipie.vertx.VertxSliceServer;
@@ -20,8 +21,6 @@ import java.nio.file.Path;
 import org.apache.commons.io.FileUtils;
 import org.cactoos.list.ListOf;
 import org.hamcrest.MatcherAssert;
-import org.hamcrest.core.IsEqual;
-import org.hamcrest.core.StringContains;
 import org.hamcrest.text.StringContainsInOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,12 +36,32 @@ import org.testcontainers.containers.GenericContainer;
  * @checkstyle ClassDataAbstractionCouplingCheck (500 lines)
  */
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public final class CondaSliceITCase {
+public final class CondaSliceAuthITCase {
 
     /**
      * Vertx instance.
      */
     private static final Vertx VERTX = Vertx.vertx();
+
+    /**
+     * Test username.
+     */
+    private static final String UNAME = "Alice";
+
+    /**
+     * Test username.
+     */
+    private static final String PSWD = "wonderland";
+
+    /**
+     * Condarc file name with user credentials.
+     */
+    private static final String USER = ".condarc_user";
+
+    /**
+     * Condarc file name without credentials.
+     */
+    private static final String ANONIM = ".condarc_anonim";
 
     /**
      * Temporary directory for all tests.
@@ -73,22 +92,39 @@ public final class CondaSliceITCase {
 
     @BeforeEach
     void initialize() throws Exception {
-        this.storage = new InMemoryStorage();
         this.port = new RandomFreePort().get();
+        this.storage = new InMemoryStorage();
         final String url = String.format("http://host.testcontainers.internal:%d", this.port);
         this.server = new VertxSliceServer(
-            CondaSliceITCase.VERTX,
-            new LoggingSlice(new BodyLoggingSlice(new CondaSlice(this.storage, url))),
+            CondaSliceAuthITCase.VERTX,
+            new LoggingSlice(
+                new CondaSlice(
+                    this.storage,
+                    (user, action) -> CondaSliceAuthITCase.UNAME.equals(user.name()),
+                    new Authentication.Single(
+                        CondaSliceAuthITCase.UNAME, CondaSliceAuthITCase.PSWD
+                    ),
+                    url
+                )
+            ),
             this.port
         );
         this.server.start();
         Testcontainers.exposeHostPorts(this.port);
         Files.write(
-            this.tmp.resolve(".condarc"), String.format("channels:\n  - %s", url).getBytes()
+            this.tmp.resolve(CondaSliceAuthITCase.USER),
+            String.format(
+                "channels:\n  - \"http://%s:%s@host.testcontainers.internal:%d\"",
+                CondaSliceAuthITCase.UNAME, CondaSliceAuthITCase.PSWD, this.port
+            ).getBytes()
         );
-        FileUtils.copyDirectory(
-            new TestResource("example-project").asPath().toFile(),
-            this.tmp.toFile()
+        Files.write(
+            this.tmp.resolve(CondaSliceAuthITCase.ANONIM),
+            String.format("channels:\n  - %s", url).getBytes()
+        );
+        FileUtils.copyFile(
+            new TestResource("CondaSliceITCase/snappy-1.1.3-0.tar.bz2").asPath().toFile(),
+            this.tmp.resolve("snappy-1.1.3-0.tar.bz2").toFile()
         );
         this.cntn = new GenericContainer<>("continuumio/miniconda3:4.10.3")
             .withCommand("tail", "-f", "/dev/null")
@@ -101,63 +137,44 @@ public final class CondaSliceITCase {
     }
 
     @Test
-    void anacondaCanLogin() throws Exception {
+    void canUploadAndInstall() throws Exception {
+        this.moveCondarc(CondaSliceAuthITCase.ANONIM);
         this.exec(
             "anaconda", "config", "--set", "url",
             String.format("http://host.testcontainers.internal:%d/", this.port), "-s"
         );
         MatcherAssert.assertThat(
-            this.exec("anaconda", "-v", "login", "--username", "any", "--password", "any"),
+            "Anaconda login was not successful",
+            this.exec(
+                "anaconda", "-v", "login", "--username",
+                CondaSliceAuthITCase.UNAME, "--password", CondaSliceAuthITCase.PSWD
+            ),
+            new StringContainsInOrder(
+                new ListOf<>("http://host.testcontainers.internal", "Alice's login successful")
+            )
+        );
+        MatcherAssert.assertThat(
+            "Anaconda upload was not successful",
+            this.exec(
+                "anaconda", "upload", "./snappy-1.1.3-0.tar.bz2"
+            ),
             new StringContainsInOrder(
                 new ListOf<>(
-                    "Using Anaconda API: http://host.testcontainers.internal",
-                    "any's login successful"
+                    "http://host.testcontainers.internal",
+                    "Alice/snappy/1.1.3/linux-64/snappy-1.1.3-0.tar.bz2",
+                    "Upload complete"
                 )
             )
         );
         MatcherAssert.assertThat(
-            this.exec("anaconda", "logout"),
-            new StringContainsInOrder(
-                new ListOf<>(
-                    "Using Anaconda API: http://host.testcontainers.internal", "logout successful"
-                )
-            )
-        );
-        MatcherAssert.assertThat(
-            this.exec("anaconda", "-v", "login", "--username", "alice", "--password", "abc123"),
-            new StringContainsInOrder(
-                new ListOf<>(
-                    "Using Anaconda API: http://host.testcontainers.internal",
-                    "alice's login successful"
-                )
-            )
-        );
-    }
-
-    @Test
-    void canPublishTwoVersionsWithCondaBuildAndThenInstall() throws Exception {
-        this.moveCondarc();
-        this.exec(
-            "anaconda", "config", "--set", "url",
-            String.format("http://host.testcontainers.internal:%d/", this.port),
-            "-s"
-        );
-        this.exec("conda", "config", "--set", "anaconda_upload", "yes");
-        MatcherAssert.assertThat(
-            "Login was not successful",
-            this.exec("anaconda", "login", "--username", "anonymous", "--password", "any"),
-            new StringContains("anonymous's login successful")
-        );
-        this.uploadAndCheck("0.0.1");
-        this.uploadAndCheck("0.0.2");
-        MatcherAssert.assertThat(
-            "Example-package 0.0.2 was not installed",
-            exec("conda", "install", "--verbose", "-y", "example-package"),
+            exec("conda", "install", "--verbose", "-y", "snappy"),
             new StringContainsInOrder(
                 new ListOf<String>(
                     "The following packages will be downloaded:",
                     "http://host.testcontainers.internal",
-                    "linux-64::example-package-0.0.2-0",
+                    "linux-64::snappy-1.1.3-0",
+                    "Preparing transaction: ...working... done",
+                    "Verifying transaction: ...working... done",
                     "Executing transaction: ...working... done"
                 )
             )
@@ -166,7 +183,7 @@ public final class CondaSliceITCase {
 
     @Test
     void canInstallWithCondaInstall() throws Exception {
-        this.moveCondarc();
+        this.moveCondarc(CondaSliceAuthITCase.USER);
         new TestResource("CondaSliceITCase/packages.json")
             .saveTo(this.storage, new Key.From("linux-64/repodata.json"));
         new TestResource("CondaSliceITCase/snappy-1.1.3-0.tar.bz2")
@@ -198,34 +215,9 @@ public final class CondaSliceITCase {
         return res.toString();
     }
 
-    private void moveCondarc() throws IOException, InterruptedException {
-        this.cntn.execInContainer("mv", "/home/.condarc", "/root/");
-        this.cntn.execInContainer("rm", "/home/.condarc");
-    }
-
-    private void uploadAndCheck(final String version) throws Exception {
-        MatcherAssert.assertThat(
-            "Package was not installed successfully",
-            this.exec(
-                "conda", "build", "--output-folder",
-                String.format("./%s/conda-out/", version), String.format("./%s/conda/", version)
-            ),
-            new StringContainsInOrder(
-                new ListOf<String>(
-                    "Creating package \"example-package\"",
-                    String.format("Creating release \"%s\"", version),
-                    // @checkstyle LineLengthCheck (1 line)
-                    String.format("Uploading file \"anonymous/example-package/%s/linux-64/example-package-%s-0.tar.bz2\"", version, version),
-                    "Upload complete", "conda package located at:"
-                )
-            )
-        );
-        MatcherAssert.assertThat(
-            "Package not found in storage",
-            this.storage.exists(
-                new Key.From(String.format("linux-64/example-package-%s-0.tar.bz2", version))
-            ).join(),
-            new IsEqual<>(true)
-        );
+    private void moveCondarc(final String name) throws IOException, InterruptedException {
+        final String file = String.format("/home/%s", name);
+        this.cntn.execInContainer("mv", file, "/root/.condarc");
+        this.cntn.execInContainer("rm", file);
     }
 }

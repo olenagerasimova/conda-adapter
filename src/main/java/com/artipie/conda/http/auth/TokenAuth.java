@@ -18,6 +18,12 @@ import java.util.concurrent.CompletionStage;
 public final class TokenAuth implements TokenAuthentication {
 
     /**
+     * Anonymous token authentication.
+     */
+    public static final TokenAuthentication ANONYMOUS = token ->
+        CompletableFuture.completedFuture(Optional.of(new Authentication.User("anonymous")));
+
+    /**
      * Tokens.
      */
     private final Map<String, Authentication.User> tokens;
