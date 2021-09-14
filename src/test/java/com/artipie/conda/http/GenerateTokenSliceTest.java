@@ -49,7 +49,7 @@ class GenerateTokenSliceTest {
         );
         MatcherAssert.assertThat(
             "Token map does not have token for user",
-            tokens.containsValue(name),
+            tokens.containsValue(new Authentication.User(name)),
             new IsEqual<>(true)
         );
     }
