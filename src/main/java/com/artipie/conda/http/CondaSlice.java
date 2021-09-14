@@ -17,8 +17,6 @@ import com.artipie.http.auth.Permission;
 import com.artipie.http.auth.Permissions;
 import com.artipie.http.auth.TokenAuthentication;
 import com.artipie.http.rq.RqMethod;
-import com.artipie.http.rs.RsStatus;
-import com.artipie.http.rs.RsWithStatus;
 import com.artipie.http.rs.StandardRs;
 import com.artipie.http.rt.ByMethodsRule;
 import com.artipie.http.rt.RtRule;
@@ -27,8 +25,8 @@ import com.artipie.http.rt.SliceRoute;
 import com.artipie.http.slice.KeyFromPath;
 import com.artipie.http.slice.SliceDownload;
 import com.artipie.http.slice.SliceSimple;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,7 +48,8 @@ public final class CondaSlice extends Slice.Wrap {
     /**
      * Tokens and users.
      */
-    private static final Map<String, Authentication.User> TKNS = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, Authentication.User> TKNS =
+        new ConcurrentHashMap<>();
 
     /**
      * Ctor.
@@ -195,7 +194,7 @@ public final class CondaSlice extends Slice.Wrap {
                         new RtRule.ByPath(".*authentications$"), new ByMethodsRule(RqMethod.DELETE)
                     ),
                     new BasicAuthSlice(
-                        new SliceSimple(new RsWithStatus(RsStatus.CREATED)), users,
+                        new DeleteTokenSlice(CondaSlice.TKNS), users,
                         new Permission.ByName(perms, Action.Standard.WRITE)
                     )
                 ),

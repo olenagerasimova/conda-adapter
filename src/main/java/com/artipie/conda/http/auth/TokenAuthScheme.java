@@ -26,7 +26,7 @@ public final class TokenAuthScheme implements AuthScheme {
     /**
      * Token authentication prefix.
      */
-    private static final String NAME = "token";
+    public static final String NAME = "token";
 
     /**
      * Request line pattern.
