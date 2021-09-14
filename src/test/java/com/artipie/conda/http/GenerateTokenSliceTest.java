@@ -29,7 +29,7 @@ class GenerateTokenSliceTest {
 
     @Test
     void addsToken() {
-        final Map<String, String> tokens = new HashMap<>();
+        final Map<String, Authentication.User> tokens = new HashMap<>();
         final String name = "Alice";
         final String pswd = "wonderland";
         MatcherAssert.assertThat(
@@ -49,7 +49,7 @@ class GenerateTokenSliceTest {
         );
         MatcherAssert.assertThat(
             "Token map does not have token for user",
-            tokens.containsValue(name),
+            tokens.containsValue(new Authentication.User(name)),
             new IsEqual<>(true)
         );
     }
