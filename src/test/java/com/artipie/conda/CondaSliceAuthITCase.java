@@ -32,7 +32,7 @@ import org.testcontainers.containers.GenericContainer;
 
 /**
  * Conda adapter integration test.
- * @since 0.3
+ * @since 0.5
  * @checkstyle ClassDataAbstractionCouplingCheck (500 lines)
  */
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
@@ -167,6 +167,7 @@ public final class CondaSliceAuthITCase {
             )
         );
         MatcherAssert.assertThat(
+            "Failed to install package snappy",
             exec("conda", "install", "--verbose", "-y", "snappy"),
             new StringContainsInOrder(
                 new ListOf<String>(
