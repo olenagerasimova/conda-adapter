@@ -270,12 +270,12 @@ SOFTWARE.
                     <limit>
                       <counter>METHOD</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.68</minimum>
+                      <minimum>0.66</minimum>
                     </limit>
                     <limit>
                       <counter>CLASS</counter>
                       <value>MISSEDCOUNT</value>
-                      <maximum>8</maximum>
+                      <maximum>10</maximum>
                     </limit>
                   </limits>
                 </rule>
