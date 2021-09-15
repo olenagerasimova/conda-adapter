@@ -28,7 +28,7 @@ import org.reactivestreams.Publisher;
  * <a href="https://api.anaconda.org/docs#/authentication/delete_authentications">Documentation</a>.
  * @since 0.5
  */
-public final class DeleteTokenSlice implements Slice {
+final class DeleteTokenSlice implements Slice {
 
     /**
      * Auth tokens.
@@ -39,7 +39,7 @@ public final class DeleteTokenSlice implements Slice {
      * Ctor.
      * @param tokens Auth tokens
      */
-    public DeleteTokenSlice(final ConcurrentMap<String, Authentication.User> tokens) {
+    DeleteTokenSlice(final ConcurrentMap<String, Authentication.User> tokens) {
         this.tokens = tokens;
     }
 
