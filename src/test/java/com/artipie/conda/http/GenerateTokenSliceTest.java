@@ -13,8 +13,8 @@ import com.artipie.http.hm.SliceHasResponse;
 import com.artipie.http.rq.RequestLine;
 import com.artipie.http.rq.RqMethod;
 import com.artipie.http.rs.RsStatus;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
@@ -29,7 +29,7 @@ class GenerateTokenSliceTest {
 
     @Test
     void addsToken() {
-        final Map<String, Authentication.User> tokens = new HashMap<>();
+        final ConcurrentMap<String, Authentication.User> tokens = new ConcurrentHashMap<>();
         final String name = "Alice";
         final String pswd = "wonderland";
         MatcherAssert.assertThat(
@@ -59,7 +59,7 @@ class GenerateTokenSliceTest {
         MatcherAssert.assertThat(
             new GenerateTokenSlice(
                 new Authentication.Single("Any", "123"),
-                new HashMap<>()
+                new ConcurrentHashMap<>()
             ),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.UNAUTHORIZED),

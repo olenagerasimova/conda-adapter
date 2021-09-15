@@ -18,6 +18,7 @@ import com.artipie.http.rs.common.RsJson;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import javax.json.Json;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.reactivestreams.Publisher;
@@ -39,14 +40,15 @@ final class GenerateTokenSlice implements Slice {
     /**
      * Tokens.
      */
-    private final Map<String, Authentication.User> tokens;
+    private final ConcurrentMap<String, Authentication.User> tokens;
 
     /**
      * Ctor.
      * @param auth Authentication
      * @param tokens Tokens
      */
-    GenerateTokenSlice(final Authentication auth, final Map<String, Authentication.User> tokens) {
+    GenerateTokenSlice(final Authentication auth,
+        final ConcurrentMap<String, Authentication.User> tokens) {
         this.auth = auth;
         this.tokens = tokens;
     }
