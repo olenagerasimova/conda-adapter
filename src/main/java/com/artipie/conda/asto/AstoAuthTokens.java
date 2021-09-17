@@ -6,12 +6,12 @@ package com.artipie.conda.asto;
 
 import com.artipie.asto.Key;
 import com.artipie.asto.Storage;
-import com.artipie.conda.Tokens;
+import com.artipie.conda.AuthTokens;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 /**
- * Asto implementation of {@link Tokens}: adds/updates tokens in storage. Tokens
+ * Asto implementation of {@link AuthTokens}: adds/updates tokens in storage. Tokens
  * are stored in storage by key `.tokens.json` in json format:
  * {
  *   "tokens": {
@@ -29,7 +29,7 @@ import java.util.concurrent.CompletionStage;
  * @checkstyle ConstantUsageCheck (20 lines)
  */
 @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
-public final class AstoTokens implements Tokens {
+public final class AstoAuthTokens implements AuthTokens {
 
     /**
      * Tokens storage item key.
@@ -51,7 +51,7 @@ public final class AstoTokens implements Tokens {
      * @param asto Abstract storage
      * @param ttl Time to live
      */
-    public AstoTokens(final Storage asto, final String ttl) {
+    public AstoAuthTokens(final Storage asto, final String ttl) {
         this.asto = asto;
         this.ttl = ttl;
     }

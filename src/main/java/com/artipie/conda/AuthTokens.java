@@ -4,27 +4,28 @@
  */
 package com.artipie.conda;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import javax.json.JsonObject;
 
 /**
  * Authentication tokens.
  * @since 0.5
  */
-public interface Tokens {
+public interface AuthTokens {
 
     /**
-     * Get token item by token string.
+     * Get valid token item by token string.
      * @param token Token
-     * @return Full token info if present
+     * @return Full token info if present and is not expired
      */
     CompletionStage<Optional<TokenItem>> get(String token);
 
     /**
-     * Find token item by username.
+     * Find valid token item by username.
      * @param token Token
-     * @return Full token info if found
+     * @return Full token info if found and is not expired
      */
     CompletionStage<Optional<TokenItem>> find(String token);
 
@@ -44,7 +45,7 @@ public interface Tokens {
         /**
          * Name of the user.
          */
-        private final String name;
+        private final String uname;
 
         /**
          * Token.
@@ -54,18 +55,34 @@ public interface Tokens {
         /**
          * Expiration date.
          */
-        private final Date expire;
+        private final Instant expire;
 
         /**
          * Ctor.
-         * @param name User name
          * @param token Token
-         * @param expire Expiration date
+         * @param info Token info in json format
          */
-        public TokenItem(final String name, final String token, final Date expire) {
-            this.name = name;
+        public TokenItem(final String token, final JsonObject info) {
             this.token = token;
-            this.expire = expire;
+            this.uname = info.getString("name");
+            this.expire = Instant.ofEpochMilli(info.getJsonNumber("expire").longValue());
         }
+
+        /**
+         * Name of the user, token owner.
+         * @return User name
+         */
+        public String userName() {
+            return this.uname;
+        }
+
+        /**
+         * Is this token expired?
+         * @return True if yes
+         */
+        public boolean expired() {
+            return this.expire.compareTo(Instant.now()) > 0;
+        }
+
     }
 }
