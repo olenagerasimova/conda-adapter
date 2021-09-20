@@ -4,10 +4,11 @@
  */
 package com.artipie.conda;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-import javax.json.JsonObject;
 
 /**
  * Authentication tokens.
@@ -24,10 +25,10 @@ public interface AuthTokens {
 
     /**
      * Find valid token item by username.
-     * @param token Token
+     * @param username Name of the user
      * @return Full token info if found and is not expired
      */
-    CompletionStage<Optional<TokenItem>> find(String token);
+    CompletionStage<Optional<TokenItem>> find(String username);
 
     /**
      * Generates token for username.
@@ -60,12 +61,25 @@ public interface AuthTokens {
         /**
          * Ctor.
          * @param token Token
+         * @param uname Name of the user
+         * @param expire Expiration date
+         */
+        public TokenItem(final String token, final String uname, final Instant expire) {
+            this.token = token;
+            this.uname = uname;
+            this.expire = expire;
+        }
+
+        /**
+         * Ctor.
+         * @param token Token
          * @param info Token info in json format
          */
-        public TokenItem(final String token, final JsonObject info) {
-            this.token = token;
-            this.uname = info.getString("name");
-            this.expire = Instant.ofEpochMilli(info.getJsonNumber("expire").longValue());
+        public TokenItem(final String token, final ObjectNode info) {
+            this(
+                token, info.get("name").textValue(),
+                Instant.ofEpochMilli(info.get("expire").longValue())
+            );
         }
 
         /**
@@ -81,8 +95,28 @@ public interface AuthTokens {
          * @return True if yes
          */
         public boolean expired() {
-            return this.expire.compareTo(Instant.now()) > 0;
+            return this.expire.compareTo(Instant.now()) < 0;
         }
 
+        @Override
+        public boolean equals(final Object other) {
+            final boolean res;
+            if (this == other) {
+                res = true;
+            } else if (other == null || this.getClass() != other.getClass()) {
+                res = false;
+            } else {
+                final TokenItem item = (TokenItem) other;
+                res = this.uname.equals(item.uname)
+                    && this.token.equals(item.token)
+                    && this.expire.equals(item.expire);
+            }
+            return res;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.token, this.uname, this.expire);
+        }
     }
 }
