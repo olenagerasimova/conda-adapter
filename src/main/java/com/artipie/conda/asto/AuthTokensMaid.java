@@ -48,7 +48,7 @@ public final class AuthTokensMaid {
             exists -> {
                 CompletionStage<Void> res = CompletableFuture.allOf();
                 if (exists) {
-                    res = new StorageValuePipeline(this.asto, AstoAuthTokens.TKNS).process(
+                    res = new StorageValuePipeline<>(this.asto, AstoAuthTokens.TKNS).process(
                         (opt, out) ->
                             opt.ifPresent(inputStream -> copyValidTokens(inputStream, out))
                     );

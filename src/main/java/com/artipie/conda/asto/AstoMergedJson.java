@@ -50,7 +50,7 @@ public final class AstoMergedJson {
      * @return Completable operation
      */
     public CompletionStage<Void> merge(final Map<String, JsonObject> items) {
-        return new StorageValuePipeline(this.asto, this.key).process(
+        return new StorageValuePipeline<>(this.asto, this.key).process(
             (opt, out) -> {
                 try {
                     final JsonFactory factory = new JsonFactory();

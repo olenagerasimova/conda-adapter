@@ -20,6 +20,7 @@ public interface AuthTokens {
 
     /**
      * Anonymous tokens.
+     * @checkstyle AnonInnerLengthCheck (30 lines)
      */
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
     AuthTokens ANONYMOUS = new AuthTokens() {
@@ -39,6 +40,11 @@ public interface AuthTokens {
         @Override
         public CompletionStage<TokenItem> generate(final String name, final Duration ttl) {
             return this.get("any").thenApply(res -> res.get());
+        }
+
+        @Override
+        public CompletionStage<Boolean> remove(final String token) {
+            return CompletableFuture.completedFuture(true);
         }
     };
 
@@ -63,6 +69,13 @@ public interface AuthTokens {
      * @return Token string
      */
     CompletionStage<TokenItem> generate(String name, Duration ttl);
+
+    /**
+     * Remove token.
+     * @param token Token string
+     * @return Completable action, true is valid token found and removed, false otherwise
+     */
+    CompletionStage<Boolean> remove(String token);
 
     /**
      * Token item: username, token and expiration day.
