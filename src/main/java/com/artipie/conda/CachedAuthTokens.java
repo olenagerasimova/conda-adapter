@@ -78,6 +78,12 @@ public final class CachedAuthTokens implements AuthTokens {
         );
     }
 
+    @Override
+    public CompletionStage<Boolean> remove(final String token) {
+        return CompletableFuture.runAsync(() -> this.cache.invalidate(token))
+            .thenCompose(nothing -> this.origin.remove(token));
+    }
+
     /**
      * Checks if
      *  a) the token from cache is absent, calls provided compute and ads value to cache

@@ -18,8 +18,10 @@ import org.cactoos.io.ReaderOf;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
+import org.json.JSONException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 import wtf.g4s8.hamcrest.json.JsonHas;
 import wtf.g4s8.hamcrest.json.JsonValueIs;
 
@@ -29,7 +31,7 @@ import wtf.g4s8.hamcrest.json.JsonValueIs;
  * @checkstyle MagicNumberCheck (500 lines)
  * @checkstyle ClassDataAbstractionCouplingCheck (500 lines)
  */
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
 class AstoAuthTokensTest {
 
     /**
@@ -166,6 +168,52 @@ class AstoAuthTokensTest {
                     new JsonHas("expire", new JsonValueIs(token.validUntil().toEpochMilli()))
                 )
             )
+        );
+    }
+
+    @Test
+    void removesTokenWhenPresent() {
+        new TestResource(AstoAuthTokensTest.TOKENS_JSON).saveTo(this.asto, AstoAuthTokens.TKNS);
+        MatcherAssert.assertThat(
+            "Should return true when token removed",
+            new AstoAuthTokens(this.asto).remove("abc123").toCompletableFuture().join(),
+            new IsEqual<>(true)
+        );
+        final JsonObject tokens = Json.createReader(
+            new ReaderOf(
+                new BlockingStorage(this.asto).value(AstoAuthTokens.TKNS), StandardCharsets.UTF_8
+            )
+        ).readObject().getJsonObject("tokens");
+        MatcherAssert.assertThat(
+            "Resulting json is not as expected",
+            tokens,
+            new JsonHas(
+                "xyz098",
+                Matchers.allOf(
+                    new JsonHas("name", new JsonValueIs("John")),
+                    new JsonHas("expire", new JsonValueIs(1_516_376_429_792L))
+                )
+            )
+        );
+    }
+
+    @Test
+    void returnsFalseIfTokenNotFound() throws JSONException {
+        new TestResource(AstoAuthTokensTest.TOKENS_JSON).saveTo(this.asto, AstoAuthTokens.TKNS);
+        MatcherAssert.assertThat(
+            "Should return false when token not removed",
+            new AstoAuthTokens(this.asto).remove("any").toCompletableFuture().join(),
+            new IsEqual<>(false)
+        );
+        JSONAssert.assertEquals(
+            "Should not change json token file",
+            new String(
+                new BlockingStorage(this.asto).value(AstoAuthTokens.TKNS), StandardCharsets.UTF_8
+            ),
+            new String(
+                new TestResource(AstoAuthTokensTest.TOKENS_JSON).asBytes(), StandardCharsets.UTF_8
+            ),
+            true
         );
     }
 }

@@ -99,6 +99,11 @@ class GenerateTokenSliceTest {
                 new TokenItem(GenerateTokenSliceTest.TOKEN, name, Instant.now().plus(ttl))
             );
         }
+
+        @Override
+        public CompletionStage<Boolean> remove(final String token) {
+            throw new NotImplementedException("Not required to implement");
+        }
     }
 
 }

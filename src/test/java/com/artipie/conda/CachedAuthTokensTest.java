@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import org.cactoos.list.ListOf;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.IsEqual;
+import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -125,6 +126,18 @@ class CachedAuthTokensTest {
         );
     }
 
+    @Test
+    void removesFromCache() {
+        final AuthTokens.TokenItem item = new AuthTokens.TokenItem("04", "ZeroFour", Instant.MIN);
+        this.cache.put(item.token(), item);
+        new CachedAuthTokens(this.cache, new FakeAuthTokens()).remove(item.token())
+            .toCompletableFuture().join();
+        MatcherAssert.assertThat(
+            this.cache.getIfPresent(item.token()),
+            new IsNull<>()
+        );
+    }
+
     /**
      * Fake implementation of {@link AuthTokens}.
      * @since 0.5
@@ -171,6 +184,11 @@ class CachedAuthTokensTest {
             final TokenItem value = new TokenItem("abc123", "Janette", Instant.now().plus(ttl));
             this.tokens.add(value);
             return CompletableFuture.completedFuture(value);
+        }
+
+        @Override
+        public CompletionStage<Boolean> remove(final String token) {
+            return CompletableFuture.completedFuture(true);
         }
     }
 
