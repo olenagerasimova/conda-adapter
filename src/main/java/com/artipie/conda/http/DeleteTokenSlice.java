@@ -19,7 +19,6 @@ import com.artipie.http.rs.RsWithStatus;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import org.reactivestreams.Publisher;
 
 /**
@@ -51,30 +50,26 @@ final class DeleteTokenSlice implements Slice {
                     .stream().findFirst().map(Authorization::new)
                     .map(auth -> new Authorization.Token(auth.credentials()).token())
             ).thenCompose(
-                tkn -> {
-                    final CompletionStage<Response> res;
-                    if (tkn.isPresent()) {
-                        res = this.tokens.remove(tkn.get()).thenApply(
-                            removed -> {
-                                final RsStatus status;
-                                if (removed) {
-                                    status = RsStatus.CREATED;
-                                } else {
-                                    status = RsStatus.BAD_REQUEST;
-                                }
-                                return new RsWithStatus(status);
+                tkn -> tkn.map(
+                    item -> this.tokens.remove(tkn.get()).<Response>thenApply(
+                        removed -> {
+                            final RsStatus status;
+                            if (removed) {
+                                status = RsStatus.CREATED;
+                            } else {
+                                status = RsStatus.BAD_REQUEST;
                             }
-                        );
-                    } else {
-                        res = CompletableFuture.completedFuture(
-                            new RsWithHeaders(
-                                new RsWithStatus(RsStatus.UNAUTHORIZED),
-                                new Headers.From(new WwwAuthenticate(TokenAuthScheme.NAME))
-                            )
-                        );
-                    }
-                    return res;
-                }
+                            return new RsWithStatus(status);
+                        }
+                    )
+                ).orElse(
+                    CompletableFuture.completedFuture(
+                        new RsWithHeaders(
+                            new RsWithStatus(RsStatus.UNAUTHORIZED),
+                            new Headers.From(new WwwAuthenticate(TokenAuthScheme.NAME))
+                        )
+                    )
+                )
             )
         );
     }
