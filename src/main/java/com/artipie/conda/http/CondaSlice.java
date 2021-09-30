@@ -28,8 +28,6 @@ import com.artipie.http.slice.KeyFromPath;
 import com.artipie.http.slice.SliceDownload;
 import com.artipie.http.slice.SliceSimple;
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,12 +45,6 @@ public final class CondaSlice extends Slice.Wrap {
      * Transform pattern for download slice.
      */
     private static final Pattern PTRN = Pattern.compile(".*/(.*/.*(\\.tar\\.bz2|\\.conda))$");
-
-    /**
-     * Tokens and users.
-     */
-    private static final ConcurrentMap<String, Authentication.User> TKNS =
-        new ConcurrentHashMap<>();
 
     /**
      * Ctor.
@@ -207,7 +199,7 @@ public final class CondaSlice extends Slice.Wrap {
                         new RtRule.ByPath(".*authentications$"), new ByMethodsRule(RqMethod.DELETE)
                     ),
                     new BasicAuthSlice(
-                        new DeleteTokenSlice(CondaSlice.TKNS), users,
+                        new DeleteTokenSlice(tokens), users,
                         new Permission.ByName(perms, Action.Standard.WRITE)
                     )
                 ),
