@@ -4,12 +4,12 @@
  */
 package com.artipie.conda.http;
 
+import com.artipie.conda.AuthTokens;
 import com.artipie.conda.http.auth.TokenAuthScheme;
 import com.artipie.http.Headers;
 import com.artipie.http.Response;
 import com.artipie.http.Slice;
 import com.artipie.http.async.AsyncResponse;
-import com.artipie.http.auth.Authentication;
 import com.artipie.http.headers.Authorization;
 import com.artipie.http.headers.WwwAuthenticate;
 import com.artipie.http.rq.RqHeaders;
@@ -18,9 +18,7 @@ import com.artipie.http.rs.RsWithHeaders;
 import com.artipie.http.rs.RsWithStatus;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
 import org.reactivestreams.Publisher;
 
 /**
@@ -33,13 +31,13 @@ final class DeleteTokenSlice implements Slice {
     /**
      * Auth tokens.
      */
-    private final ConcurrentMap<String, Authentication.User> tokens;
+    private final AuthTokens tokens;
 
     /**
      * Ctor.
      * @param tokens Auth tokens
      */
-    DeleteTokenSlice(final ConcurrentMap<String, Authentication.User> tokens) {
+    DeleteTokenSlice(final AuthTokens tokens) {
         this.tokens = tokens;
     }
 
@@ -48,28 +46,30 @@ final class DeleteTokenSlice implements Slice {
         final Iterable<Map.Entry<String, String>> headers, final Publisher<ByteBuffer> body) {
         return new AsyncResponse(
             CompletableFuture.supplyAsync(
-                () -> {
-                    final Optional<String> token = new RqHeaders(headers, Authorization.NAME)
-                        .stream().findFirst().map(Authorization::new)
-                        .map(auth -> new Authorization.Token(auth.credentials()).token());
-                    final Response res;
-                    if (token.isPresent()) {
-                        final Authentication.User removed = this.tokens.remove(token.get());
-                        final RsStatus status;
-                        if (removed == null) {
-                            status = RsStatus.BAD_REQUEST;
-                        } else {
-                            status = RsStatus.CREATED;
+                () -> new RqHeaders(headers, Authorization.NAME)
+                    .stream().findFirst().map(Authorization::new)
+                    .map(auth -> new Authorization.Token(auth.credentials()).token())
+            ).thenCompose(
+                tkn -> tkn.map(
+                    item -> this.tokens.remove(tkn.get()).<Response>thenApply(
+                        removed -> {
+                            final RsStatus status;
+                            if (removed) {
+                                status = RsStatus.CREATED;
+                            } else {
+                                status = RsStatus.BAD_REQUEST;
+                            }
+                            return new RsWithStatus(status);
                         }
-                        res = new RsWithStatus(status);
-                    } else {
-                        res = new RsWithHeaders(
+                    )
+                ).orElse(
+                    CompletableFuture.completedFuture(
+                        new RsWithHeaders(
                             new RsWithStatus(RsStatus.UNAUTHORIZED),
                             new Headers.From(new WwwAuthenticate(TokenAuthScheme.NAME))
-                        );
-                    }
-                    return res;
-                }
+                        )
+                    )
+                )
             )
         );
     }
