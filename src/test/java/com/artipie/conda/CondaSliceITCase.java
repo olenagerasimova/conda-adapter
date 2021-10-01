@@ -25,7 +25,6 @@ import org.hamcrest.core.StringContains;
 import org.hamcrest.text.StringContainsInOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.testcontainers.Testcontainers;
@@ -102,7 +101,6 @@ public final class CondaSliceITCase {
     }
 
     @Test
-    @Disabled
     void anacondaCanLogin() throws Exception {
         this.exec(
             "anaconda", "config", "--set", "url",
