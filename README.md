@@ -7,7 +7,7 @@
 [![We recommend IntelliJ IDEA](https://www.elegantobjects.org/intellij-idea.svg)](https://www.jetbrains.com/idea/)
 
 [![Javadoc](http://www.javadoc.io/badge/com.artipie/conda-adapter.svg)](http://www.javadoc.io/doc/com.artipie/conda-adapter)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/artipie/conda-adapter/blob/master/LICENSE.txt)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/artipie/conda-adapter/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/artipie/conda-adapter/branch/master/graph/badge.svg)](https://codecov.io/gh/artipie/conda-adapter)
 [![Hits-of-Code](https://hitsofcode.com/github/artipie/conda-adapter)](https://hitsofcode.com/view/github/artipie/conda-adapter)
 [![Maven Central](https://img.shields.io/maven-central/v/com.artipie/conda-adapter.svg)](https://maven-badges.herokuapp.com/maven-central/com.artipie/conda-adapter)
