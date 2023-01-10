@@ -4,10 +4,10 @@
  */
 package com.artipie.conda.http.auth;
 
-import com.artipie.conda.AuthTokens;
 import com.artipie.http.Slice;
 import com.artipie.http.auth.AuthSlice;
 import com.artipie.http.auth.Permission;
+import com.artipie.http.auth.TokenAuthentication;
 
 /**
  * Token authentication slice.
@@ -22,7 +22,7 @@ public final class TokenAuthSlice extends Slice.Wrap {
      * @param tokens Token authentication
      */
     public TokenAuthSlice(
-        final Slice origin, final Permission perm, final AuthTokens tokens
+        final Slice origin, final Permission perm, final TokenAuthentication tokens
     ) {
         super(new AuthSlice(origin, new TokenAuthScheme(new TokenAuth(tokens)), perm));
     }

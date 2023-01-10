@@ -10,6 +10,8 @@ import com.artipie.asto.memory.InMemoryStorage;
 import com.artipie.asto.test.TestResource;
 import com.artipie.conda.http.CondaSlice;
 import com.artipie.http.auth.Authentication;
+import com.artipie.http.auth.TokenAuthentication;
+import com.artipie.http.auth.Tokens;
 import com.artipie.http.misc.RandomFreePort;
 import com.artipie.http.slice.LoggingSlice;
 import com.artipie.vertx.VertxSliceServer;
@@ -18,7 +20,8 @@ import io.vertx.reactivex.core.Vertx;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.io.FileUtils;
 import org.cactoos.list.ListOf;
 import org.hamcrest.MatcherAssert;
@@ -41,6 +44,11 @@ import org.testcontainers.containers.GenericContainer;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 @DisabledOnOs(OS.WINDOWS)
 public final class CondaSliceAuthITCase {
+
+    /**
+     * Test auth token.
+     */
+    private static final String TKN = "abc123";
 
     /**
      * Vertx instance.
@@ -108,8 +116,8 @@ public final class CondaSliceAuthITCase {
                     new Authentication.Single(
                         CondaSliceAuthITCase.UNAME, CondaSliceAuthITCase.PSWD
                     ),
-                    url,
-                    Duration.ofDays(1)
+                    new FakeAuthTokens(),
+                    url
                 )
             ),
             this.port
@@ -131,7 +139,7 @@ public final class CondaSliceAuthITCase {
             new TestResource("CondaSliceITCase/snappy-1.1.3-0.tar.bz2").asPath().toFile(),
             this.tmp.resolve("snappy-1.1.3-0.tar.bz2").toFile()
         );
-        this.cntn = new GenericContainer<>("continuumio/miniconda3:4.10.3")
+        this.cntn = new GenericContainer<>("continuumio/miniconda3:22.11.1")
             .withCommand("tail", "-f", "/dev/null")
             .withWorkingDirectory("/home/")
             .withFileSystemBind(this.tmp.toString(), "/home");
@@ -225,5 +233,31 @@ public final class CondaSliceAuthITCase {
         final String file = String.format("/home/%s", name);
         this.cntn.execInContainer("mv", file, "/root/.condarc");
         this.cntn.execInContainer("rm", file);
+    }
+
+    /**
+     * Fake implementation of {@link Tokens}.
+     * @since 0.5
+     */
+    static class FakeAuthTokens implements Tokens {
+
+        @Override
+        public TokenAuthentication auth() {
+            return tkn -> {
+                Optional<Authentication.User> res = Optional.empty();
+                if (CondaSliceAuthITCase.TKN.equals(tkn)) {
+                    res = Optional.of(new Authentication.User(CondaSliceAuthITCase.UNAME));
+                }
+                return CompletableFuture.completedFuture(res);
+            };
+        }
+
+        @Override
+        public String generate(final Authentication.User user) {
+            if (user.name().equals(CondaSliceAuthITCase.UNAME)) {
+                return CondaSliceAuthITCase.TKN;
+            }
+            throw new IllegalStateException("Unexpected user");
+        }
     }
 }
