@@ -9,11 +9,13 @@ import com.artipie.asto.Storage;
 import com.artipie.asto.memory.InMemoryStorage;
 import com.artipie.asto.test.TestResource;
 import com.artipie.conda.http.CondaSlice;
+import com.artipie.http.auth.AuthUser;
 import com.artipie.http.auth.Authentication;
 import com.artipie.http.auth.TokenAuthentication;
 import com.artipie.http.auth.Tokens;
 import com.artipie.http.misc.RandomFreePort;
 import com.artipie.http.slice.LoggingSlice;
+import com.artipie.security.policy.PolicyByUsername;
 import com.artipie.vertx.VertxSliceServer;
 import com.jcabi.log.Logger;
 import io.vertx.reactivex.core.Vertx;
@@ -112,12 +114,13 @@ public final class CondaSliceAuthITCase {
             new LoggingSlice(
                 new CondaSlice(
                     this.storage,
-                    (user, action) -> CondaSliceAuthITCase.UNAME.equals(user.name()),
+                    new PolicyByUsername(CondaSliceAuthITCase.UNAME),
                     new Authentication.Single(
                         CondaSliceAuthITCase.UNAME, CondaSliceAuthITCase.PSWD
                     ),
                     new FakeAuthTokens(),
-                    url
+                    url,
+                    "any"
                 )
             ),
             this.port
@@ -244,16 +247,16 @@ public final class CondaSliceAuthITCase {
         @Override
         public TokenAuthentication auth() {
             return tkn -> {
-                Optional<Authentication.User> res = Optional.empty();
+                Optional<AuthUser> res = Optional.empty();
                 if (CondaSliceAuthITCase.TKN.equals(tkn)) {
-                    res = Optional.of(new Authentication.User(CondaSliceAuthITCase.UNAME));
+                    res = Optional.of(new AuthUser(CondaSliceAuthITCase.UNAME, "test"));
                 }
                 return CompletableFuture.completedFuture(res);
             };
         }
 
         @Override
-        public String generate(final Authentication.User user) {
+        public String generate(final AuthUser user) {
             if (user.name().equals(CondaSliceAuthITCase.UNAME)) {
                 return CondaSliceAuthITCase.TKN;
             }

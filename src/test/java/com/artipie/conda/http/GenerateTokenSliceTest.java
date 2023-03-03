@@ -6,6 +6,7 @@ package com.artipie.conda.http;
 
 import com.artipie.asto.Content;
 import com.artipie.http.Headers;
+import com.artipie.http.auth.AuthUser;
 import com.artipie.http.auth.Authentication;
 import com.artipie.http.auth.TokenAuthentication;
 import com.artipie.http.auth.Tokens;
@@ -84,7 +85,7 @@ class GenerateTokenSliceTest {
         }
 
         @Override
-        public String generate(final Authentication.User user) {
+        public String generate(final AuthUser user) {
             return GenerateTokenSliceTest.TOKEN;
         }
     }

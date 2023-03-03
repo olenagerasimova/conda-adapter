@@ -10,11 +10,10 @@ import com.artipie.conda.http.auth.TokenAuth;
 import com.artipie.conda.http.auth.TokenAuthScheme;
 import com.artipie.conda.http.auth.TokenAuthSlice;
 import com.artipie.http.Slice;
-import com.artipie.http.auth.Action;
+import com.artipie.http.auth.AuthUser;
 import com.artipie.http.auth.Authentication;
-import com.artipie.http.auth.BasicAuthSlice;
-import com.artipie.http.auth.Permission;
-import com.artipie.http.auth.Permissions;
+import com.artipie.http.auth.BasicAuthzSlice;
+import com.artipie.http.auth.OperationControl;
 import com.artipie.http.auth.TokenAuthentication;
 import com.artipie.http.auth.Tokens;
 import com.artipie.http.rq.RqMethod;
@@ -26,6 +25,9 @@ import com.artipie.http.rt.SliceRoute;
 import com.artipie.http.slice.KeyFromPath;
 import com.artipie.http.slice.SliceDownload;
 import com.artipie.http.slice.SliceSimple;
+import com.artipie.security.perms.Action;
+import com.artipie.security.perms.AdapterBasicPermission;
+import com.artipie.security.policy.Policy;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,7 +65,7 @@ public final class CondaSlice extends Slice.Wrap {
         }
 
         @Override
-        public String generate(final Authentication.User user) {
+        public String generate(final AuthUser user) {
             return "abc123";
         }
     };
@@ -74,20 +76,21 @@ public final class CondaSlice extends Slice.Wrap {
      * @param url Application url
      */
     public CondaSlice(final Storage storage, final String url) {
-        this(storage, Permissions.FREE, Authentication.ANONYMOUS, CondaSlice.ANONYMOUS, url);
+        this(storage, Policy.FREE, Authentication.ANONYMOUS, CondaSlice.ANONYMOUS, url, "*");
     }
 
     /**
      * Ctor.
      * @param storage Storage
-     * @param perms Permissions
+     * @param policy Permissions
      * @param users Users
      * @param tokens Tokens
      * @param url Application url
+     * @param repo Repository name
      * @checkstyle ParameterNumberCheck (5 lines)
      */
-    public CondaSlice(final Storage storage, final Permissions perms, final Authentication users,
-        final Tokens tokens, final String url) {
+    public CondaSlice(final Storage storage, final Policy<?> policy, final Authentication users,
+        final Tokens tokens, final String url, final String repo) {
         super(
             new SliceRoute(
                 new RtRulePath(
@@ -97,7 +100,10 @@ public final class CondaSlice extends Slice.Wrap {
                     ),
                     new TokenAuthSlice(
                         new DownloadRepodataSlice(storage),
-                        new Permission.ByName(perms, Action.Standard.READ), tokens.auth()
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.READ)
+                        ),
+                        tokens.auth()
                     )
                 ),
                 new RtRulePath(
@@ -105,9 +111,11 @@ public final class CondaSlice extends Slice.Wrap {
                         new RtRule.ByPath(".*repodata\\.json$"),
                         new ByMethodsRule(RqMethod.GET)
                     ),
-                    new BasicAuthSlice(
+                    new BasicAuthzSlice(
                         new DownloadRepodataSlice(storage), users,
-                        new Permission.ByName(perms, Action.Standard.READ)
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.READ)
+                        )
                     )
                 ),
                 new RtRulePath(
@@ -117,7 +125,9 @@ public final class CondaSlice extends Slice.Wrap {
                     ),
                     new TokenAuthSlice(
                         new SliceDownload(storage, CondaSlice.transform()),
-                        new Permission.ByName(perms, Action.Standard.READ), tokens.auth()
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.READ)
+                        ), tokens.auth()
                     )
                 ),
                 new RtRulePath(
@@ -125,9 +135,11 @@ public final class CondaSlice extends Slice.Wrap {
                         new RtRule.ByPath(".*(\\.tar\\.bz2|\\.conda)$"),
                         new ByMethodsRule(RqMethod.GET)
                     ),
-                    new BasicAuthSlice(
+                    new BasicAuthzSlice(
                         new SliceDownload(storage, CondaSlice.transform()), users,
-                        new Permission.ByName(perms, Action.Standard.READ)
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.READ)
+                        )
                     )
                 ),
                 new RtRulePath(
@@ -137,7 +149,9 @@ public final class CondaSlice extends Slice.Wrap {
                     ),
                     new TokenAuthSlice(
                         new PostStageCommitSlice(url),
-                        new Permission.ByName(perms, Action.Standard.READ), tokens.auth()
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.READ)
+                        ), tokens.auth()
                     )
                 ),
                 new RtRulePath(
@@ -147,7 +161,9 @@ public final class CondaSlice extends Slice.Wrap {
                     ),
                     new TokenAuthSlice(
                         new GetPackageSlice(),
-                        new Permission.ByName(perms, Action.Standard.READ), tokens.auth()
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.READ)
+                        ), tokens.auth()
                     )
                 ),
                 new RtRulePath(
@@ -157,7 +173,9 @@ public final class CondaSlice extends Slice.Wrap {
                     ),
                     new TokenAuthSlice(
                         new PostPackageReleaseSlice(),
-                        new Permission.ByName(perms, Action.Standard.READ), tokens.auth()
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.WRITE)
+                        ), tokens.auth()
                     )
                 ),
                 new RtRulePath(
@@ -173,7 +191,9 @@ public final class CondaSlice extends Slice.Wrap {
                     new RtRule.All(new RtRule.ByPath(".*user$"), new ByMethodsRule(RqMethod.GET)),
                     new TokenAuthSlice(
                         new GetUserSlice(new TokenAuthScheme(new TokenAuth(tokens.auth()))),
-                        new Permission.ByName(perms, Action.Standard.READ),
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.READ)
+                        ),
                         tokens.auth()
                     )
                 ),
@@ -188,18 +208,22 @@ public final class CondaSlice extends Slice.Wrap {
                     new RtRule.All(
                         new RtRule.ByPath(".*authentications$"), new ByMethodsRule(RqMethod.POST)
                     ),
-                    new BasicAuthSlice(
+                    new BasicAuthzSlice(
                         new GenerateTokenSlice(users, tokens), users,
-                        new Permission.ByName(perms, Action.Standard.WRITE)
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.WRITE)
+                        )
                     )
                 ),
                 new RtRulePath(
                     new RtRule.All(
                         new RtRule.ByPath(".*authentications$"), new ByMethodsRule(RqMethod.DELETE)
                     ),
-                    new BasicAuthSlice(
+                    new BasicAuthzSlice(
                         new DeleteTokenSlice(tokens), users,
-                        new Permission.ByName(perms, Action.Standard.WRITE)
+                        new OperationControl(
+                            policy, new AdapterBasicPermission(repo, Action.Standard.WRITE)
+                        )
                     )
                 ),
                 new RtRulePath(RtRule.FALLBACK, new SliceSimple(StandardRs.NOT_FOUND))

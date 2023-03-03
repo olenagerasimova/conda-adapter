@@ -5,7 +5,7 @@
 package com.artipie.conda.http.auth;
 
 import com.artipie.http.auth.AuthScheme;
-import com.artipie.http.auth.Authentication;
+import com.artipie.http.auth.AuthUser;
 import com.artipie.http.auth.TokenAuthentication;
 import com.artipie.http.headers.Authorization;
 import com.artipie.http.rq.RequestLineFrom;
@@ -61,7 +61,7 @@ public final class TokenAuthScheme implements AuthScheme {
      * @param line Request line
      * @return User, empty if not authenticated
      */
-    private CompletionStage<Optional<Authentication.User>> user(
+    private CompletionStage<Optional<AuthUser>> user(
         final Iterable<Map.Entry<String, String>> headers, final String line
     ) {
         return new RqHeaders(headers, Authorization.NAME).stream()
@@ -75,7 +75,7 @@ public final class TokenAuthScheme implements AuthScheme {
                     final Matcher mtchr = TokenAuthScheme.PTRN.matcher(
                         new RequestLineFrom(line).uri().toString()
                     );
-                    CompletionStage<Optional<Authentication.User>> res =
+                    CompletionStage<Optional<AuthUser>> res =
                         CompletableFuture.completedFuture(Optional.empty());
                     if (mtchr.matches()) {
                         res = this.auth.user(mtchr.group(1));
@@ -95,19 +95,19 @@ public final class TokenAuthScheme implements AuthScheme {
         /**
          * Authenticated user.
          */
-        private final Authentication.User usr;
+        private final AuthUser usr;
 
         /**
          * Ctor.
          *
          * @param user Authenticated user.
          */
-        Success(final Authentication.User user) {
+        Success(final AuthUser user) {
             this.usr = user;
         }
 
         @Override
-        public Optional<Authentication.User> user() {
+        public Optional<AuthUser> user() {
             return Optional.of(this.usr);
         }
 
@@ -125,7 +125,7 @@ public final class TokenAuthScheme implements AuthScheme {
     private static class Failure implements Result {
 
         @Override
-        public Optional<Authentication.User> user() {
+        public Optional<AuthUser> user() {
             return Optional.empty();
         }
 

@@ -4,7 +4,7 @@
  */
 package com.artipie.conda.http.auth;
 
-import com.artipie.http.auth.Authentication;
+import com.artipie.http.auth.AuthUser;
 import com.artipie.http.auth.TokenAuthentication;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -20,7 +20,9 @@ public final class TokenAuth implements TokenAuthentication {
      * Anonymous token authentication.
      */
     public static final TokenAuthentication ANONYMOUS = token ->
-        CompletableFuture.completedFuture(Optional.of(new Authentication.User("anonymous")));
+        CompletableFuture.completedFuture(
+            Optional.of(new AuthUser("anonymous", "anonymity"))
+        );
 
     /**
      * Tokens.
@@ -36,7 +38,7 @@ public final class TokenAuth implements TokenAuthentication {
     }
 
     @Override
-    public CompletionStage<Optional<Authentication.User>> user(final String token) {
+    public CompletionStage<Optional<AuthUser>> user(final String token) {
         return this.tokens.user(token);
     }
 }

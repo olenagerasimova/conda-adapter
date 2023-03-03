@@ -6,7 +6,7 @@ package com.artipie.conda.http;
 
 import com.artipie.asto.Content;
 import com.artipie.http.Headers;
-import com.artipie.http.auth.Authentication;
+import com.artipie.http.auth.AuthUser;
 import com.artipie.http.auth.TokenAuthentication;
 import com.artipie.http.auth.Tokens;
 import com.artipie.http.headers.Authorization;
@@ -80,16 +80,16 @@ class DeleteTokenSliceTest {
         @Override
         public TokenAuthentication auth() {
             return tkn -> {
-                Optional<Authentication.User> res = Optional.empty();
+                Optional<AuthUser> res = Optional.empty();
                 if (tkn.equals("abc123")) {
-                    res = Optional.of(new Authentication.User("Alice"));
+                    res = Optional.of(new AuthUser("Alice", "test"));
                 }
                 return CompletableFuture.completedFuture(res);
             };
         }
 
         @Override
-        public String generate(final Authentication.User user) {
+        public String generate(final AuthUser user) {
             throw new NotImplementedException("Not implemented");
         }
     }
