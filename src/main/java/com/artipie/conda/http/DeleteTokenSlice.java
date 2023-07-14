@@ -1,15 +1,15 @@
 /*
- * The MIT License (MIT) Copyright (c) 2020-2021 artipie.com
+ * The MIT License (MIT) Copyright (c) 2020-2023 artipie.com
  * https://github.com/artipie/conda-adapter/LICENSE
  */
 package com.artipie.conda.http;
 
-import com.artipie.conda.AuthTokens;
 import com.artipie.conda.http.auth.TokenAuthScheme;
 import com.artipie.http.Headers;
 import com.artipie.http.Response;
 import com.artipie.http.Slice;
 import com.artipie.http.async.AsyncResponse;
+import com.artipie.http.auth.Tokens;
 import com.artipie.http.headers.Authorization;
 import com.artipie.http.headers.WwwAuthenticate;
 import com.artipie.http.rq.RqHeaders;
@@ -24,6 +24,8 @@ import org.reactivestreams.Publisher;
 /**
  * Delete token slice.
  * <a href="https://api.anaconda.org/docs#/authentication/delete_authentications">Documentation</a>.
+ * This slice checks if the token is valid and returns 201 if yes. Token itself is not removed
+ * from the Artipie.
  * @since 0.5
  */
 final class DeleteTokenSlice implements Slice {
@@ -31,13 +33,13 @@ final class DeleteTokenSlice implements Slice {
     /**
      * Auth tokens.
      */
-    private final AuthTokens tokens;
+    private final Tokens tokens;
 
     /**
      * Ctor.
      * @param tokens Auth tokens
      */
-    DeleteTokenSlice(final AuthTokens tokens) {
+    DeleteTokenSlice(final Tokens tokens) {
         this.tokens = tokens;
     }
 
@@ -51,10 +53,10 @@ final class DeleteTokenSlice implements Slice {
                     .map(auth -> new Authorization.Token(auth.credentials()).token())
             ).thenCompose(
                 tkn -> tkn.map(
-                    item -> this.tokens.remove(tkn.get()).<Response>thenApply(
-                        removed -> {
+                    item -> this.tokens.auth().user(item).<Response>thenApply(
+                        user -> {
                             final RsStatus status;
-                            if (removed) {
+                            if (user.isPresent()) {
                                 status = RsStatus.CREATED;
                             } else {
                                 status = RsStatus.BAD_REQUEST;

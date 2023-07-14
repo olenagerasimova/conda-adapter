@@ -1,13 +1,15 @@
 /*
- * The MIT License (MIT) Copyright (c) 2020-2021 artipie.com
+ * The MIT License (MIT) Copyright (c) 2020-2023 artipie.com
  * https://github.com/artipie/conda-adapter/LICENSE
  */
 package com.artipie.conda.http;
 
 import com.artipie.asto.Content;
-import com.artipie.conda.AuthTokens;
 import com.artipie.http.Headers;
+import com.artipie.http.auth.AuthUser;
 import com.artipie.http.auth.Authentication;
+import com.artipie.http.auth.TokenAuthentication;
+import com.artipie.http.auth.Tokens;
 import com.artipie.http.headers.Authorization;
 import com.artipie.http.hm.RsHasBody;
 import com.artipie.http.hm.RsHasStatus;
@@ -15,11 +17,6 @@ import com.artipie.http.hm.SliceHasResponse;
 import com.artipie.http.rq.RequestLine;
 import com.artipie.http.rq.RqMethod;
 import com.artipie.http.rs.RsStatus;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import org.apache.commons.lang3.NotImplementedException;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -46,8 +43,7 @@ class GenerateTokenSliceTest {
             "Slice response in not 200 OK",
             new GenerateTokenSlice(
                 new Authentication.Single(name, pswd),
-                new FakeAuthTokens(),
-                Duration.ofDays(5)
+                new FakeAuthTokens()
             ),
             new SliceHasResponse(
                 Matchers.allOf(
@@ -68,7 +64,7 @@ class GenerateTokenSliceTest {
         MatcherAssert.assertThat(
             new GenerateTokenSlice(
                 new Authentication.Single("Any", "123"),
-                new FakeAuthTokens(), Duration.ofDays(2)
+                new FakeAuthTokens()
             ),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.UNAUTHORIZED),
@@ -78,31 +74,19 @@ class GenerateTokenSliceTest {
     }
 
     /**
-     * Fake implementation of {@link AuthTokens}.
+     * Fake implementation of {@link Tokens}.
      * @since 0.5
      */
-    static class FakeAuthTokens implements AuthTokens {
+    static class FakeAuthTokens implements Tokens {
 
         @Override
-        public CompletionStage<Optional<TokenItem>> get(final String token) {
-            throw new NotImplementedException("Not needed to implement");
+        public TokenAuthentication auth() {
+            throw new NotImplementedException("Not implemented");
         }
 
         @Override
-        public CompletionStage<Optional<TokenItem>> find(final String username) {
-            throw new NotImplementedException("Not be implemented");
-        }
-
-        @Override
-        public CompletionStage<TokenItem> generate(final String name, final Duration ttl) {
-            return CompletableFuture.completedFuture(
-                new TokenItem(GenerateTokenSliceTest.TOKEN, name, Instant.now().plus(ttl))
-            );
-        }
-
-        @Override
-        public CompletionStage<Boolean> remove(final String token) {
-            throw new NotImplementedException("Not required to implement");
+        public String generate(final AuthUser user) {
+            return GenerateTokenSliceTest.TOKEN;
         }
     }
 

@@ -1,11 +1,11 @@
 /*
- * The MIT License (MIT) Copyright (c) 2020-2021 artipie.com
+ * The MIT License (MIT) Copyright (c) 2020-2023 artipie.com
  * https://github.com/artipie/conda-adapter/LICENSE
  */
 package com.artipie.conda.http.auth;
 
 import com.artipie.http.Headers;
-import com.artipie.http.auth.Authentication;
+import com.artipie.http.auth.AuthUser;
 import com.artipie.http.auth.TokenAuthentication;
 import com.artipie.http.headers.Authorization;
 import java.util.Optional;
@@ -88,10 +88,10 @@ class TokenAuthSchemeTest {
     private static final class TestTokenAuth implements TokenAuthentication {
 
         @Override
-        public CompletionStage<Optional<Authentication.User>> user(final String token) {
-            Optional<Authentication.User> res = Optional.empty();
+        public CompletionStage<Optional<AuthUser>> user(final String token) {
+            Optional<AuthUser> res = Optional.empty();
             if (token.equals(TokenAuthSchemeTest.TKN)) {
-                res = Optional.of(new Authentication.User("Alice"));
+                res = Optional.of(new AuthUser("Alice", "test"));
             }
             return CompletableFuture.completedFuture(res);
         }

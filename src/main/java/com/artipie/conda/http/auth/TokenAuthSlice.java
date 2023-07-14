@@ -1,13 +1,13 @@
 /*
- * The MIT License (MIT) Copyright (c) 2020-2021 artipie.com
+ * The MIT License (MIT) Copyright (c) 2020-2023 artipie.com
  * https://github.com/artipie/conda-adapter/LICENSE
  */
 package com.artipie.conda.http.auth;
 
-import com.artipie.conda.AuthTokens;
 import com.artipie.http.Slice;
-import com.artipie.http.auth.AuthSlice;
-import com.artipie.http.auth.Permission;
+import com.artipie.http.auth.AuthzSlice;
+import com.artipie.http.auth.OperationControl;
+import com.artipie.http.auth.TokenAuthentication;
 
 /**
  * Token authentication slice.
@@ -18,12 +18,12 @@ public final class TokenAuthSlice extends Slice.Wrap {
     /**
      * Ctor.
      * @param origin Origin slice
-     * @param perm Permissions
+     * @param control Operation control
      * @param tokens Token authentication
      */
     public TokenAuthSlice(
-        final Slice origin, final Permission perm, final AuthTokens tokens
+        final Slice origin, final OperationControl control, final TokenAuthentication tokens
     ) {
-        super(new AuthSlice(origin, new TokenAuthScheme(new TokenAuth(tokens)), perm));
+        super(new AuthzSlice(origin, new TokenAuthScheme(new TokenAuth(tokens)), control));
     }
 }
