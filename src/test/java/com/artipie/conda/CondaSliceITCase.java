@@ -11,6 +11,8 @@ import com.artipie.asto.test.TestResource;
 import com.artipie.conda.http.CondaSlice;
 import com.artipie.http.misc.RandomFreePort;
 import com.artipie.http.slice.LoggingSlice;
+import com.artipie.scheduling.ArtifactEvent;
+import com.artipie.scheduling.EventQueue;
 import com.artipie.vertx.VertxSliceServer;
 import com.jcabi.log.Logger;
 import io.vertx.reactivex.core.Vertx;
@@ -70,15 +72,21 @@ public final class CondaSliceITCase {
      */
     private int port;
 
+    /**
+     * Artifact events.
+     */
+    private EventQueue<ArtifactEvent> events;
+
     @BeforeEach
     void initialize() throws Exception {
         this.tmp = Files.createTempDirectory("conda-test");
         this.storage = new InMemoryStorage();
         this.port = new RandomFreePort().get();
+        this.events = new EventQueue<>();
         final String url = String.format("http://host.testcontainers.internal:%d", this.port);
         this.server = new VertxSliceServer(
             CondaSliceITCase.VERTX,
-            new LoggingSlice(new BodyLoggingSlice(new CondaSlice(this.storage, url))),
+            new LoggingSlice(new BodyLoggingSlice(new CondaSlice(this.storage, url, this.events))),
             this.port
         );
         this.server.start();
@@ -161,6 +169,9 @@ public final class CondaSliceITCase {
                     "Executing transaction: ...working... done"
                 )
             )
+        );
+        MatcherAssert.assertThat(
+            "Packages info was added to events queue", this.events.size() == 2
         );
     }
 
