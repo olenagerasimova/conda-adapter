@@ -11,6 +11,8 @@ import com.artipie.asto.test.TestResource;
 import com.artipie.conda.http.CondaSlice;
 import com.artipie.http.misc.RandomFreePort;
 import com.artipie.http.slice.LoggingSlice;
+import com.artipie.scheduling.ArtifactEvent;
+import com.artipie.scheduling.EventQueue;
 import com.artipie.vertx.VertxSliceServer;
 import com.jcabi.log.Logger;
 import io.vertx.reactivex.core.Vertx;
@@ -69,6 +71,11 @@ public final class CondaSliceITCase {
      * Application port.
      */
     private int port;
+
+    /**
+     * Artifact events.
+     */
+    private EventQueue<ArtifactEvent> events;
 
     @BeforeEach
     void initialize() throws Exception {
@@ -161,6 +168,9 @@ public final class CondaSliceITCase {
                     "Executing transaction: ...working... done"
                 )
             )
+        );
+        MatcherAssert.assertThat(
+            "Packages info was added to events queue", this.events.size() == 2
         );
     }
 

@@ -18,10 +18,13 @@ import com.artipie.http.Response;
 import com.artipie.http.Slice;
 import com.artipie.http.async.AsyncResponse;
 import com.artipie.http.headers.ContentDisposition;
+import com.artipie.http.headers.Login;
 import com.artipie.http.rq.RequestLineFrom;
 import com.artipie.http.rq.multipart.RqMultipart;
 import com.artipie.http.rs.RsStatus;
 import com.artipie.http.rs.RsWithStatus;
+import com.artipie.scheduling.ArtifactEvent;
+import com.artipie.scheduling.EventQueue;
 import io.reactivex.Flowable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -39,6 +42,7 @@ import org.reactivestreams.Publisher;
  * Slice to update the repository.
  * @since 0.4
  * @checkstyle ClassDataAbstractionCouplingCheck (500 lines)
+ * @checkstyle ClassFanOutComplexityCheck (500 lines)
  */
 public final class UpdateSlice implements Slice {
 
@@ -53,16 +57,42 @@ public final class UpdateSlice implements Slice {
     private static final Key TMP = new Key.From(".upload");
 
     /**
+     * Repository type and artifact file extension.
+     */
+    private static final String CONDA = "conda";
+
+    /**
+     * Package size metadata json field.
+     */
+    private static final String SIZE = "size";
+
+    /**
      * Abstract storage.
      */
     private final Storage asto;
 
     /**
-     * Ctor.
-     * @param asto Abstract storage
+     * Artifacts events queue.
      */
-    public UpdateSlice(final Storage asto) {
+    private final EventQueue<ArtifactEvent> events;
+
+    /**
+     * Repository name.
+     */
+    private final String rname;
+
+    /**
+     * Ctor.
+     *
+     * @param asto Abstract storage
+     * @param events Artifact events
+     * @param rname Repository name
+     */
+    public UpdateSlice(final Storage asto, final EventQueue<ArtifactEvent> events,
+        final String rname) {
         this.asto = asto;
+        this.events = events;
+        this.rname = rname;
     }
 
     @Override
@@ -99,9 +129,23 @@ public final class UpdateSlice implements Slice {
                                     ).merge(
                                         // @checkstyle MagicNumberCheck (3 lines)
                                         Collections.singletonMap(matcher.group(3), json)
+                                    ).thenCompose(
+                                        ignored ->
+                                            this.asto.move(temp, new Key.From(matcher.group(1)))
+                                    ).thenAccept(
+                                        nothing -> this.events.put(
+                                            new ArtifactEvent(
+                                                UpdateSlice.CONDA, this.rname,
+                                                new Login(new Headers.From(headers)).getValue(),
+                                                String.join(
+                                                    "_", json.getString("name"),
+                                                    json.getString("arch")
+                                                ),
+                                                json.getString("version"),
+                                                json.getJsonNumber(UpdateSlice.SIZE).longValue()
+                                            )
+                                        )
                                     )
-                                ).thenCompose(
-                                    ignored -> this.asto.move(temp, new Key.From(matcher.group(1)))
                                 ).thenApply(
                                     ignored -> new RsWithStatus(RsStatus.CREATED)
                                 );
@@ -140,13 +184,13 @@ public final class UpdateSlice implements Slice {
             val -> new ContentAsStream<JsonObjectBuilder>(val).process(
                 input -> {
                     final InfoIndex info;
-                    if (name.endsWith("conda")) {
+                    if (name.endsWith(UpdateSlice.CONDA)) {
                         info = new InfoIndex.Conda(input);
                     } else {
                         info = new InfoIndex.TarBz(input);
                     }
                     return Json.createObjectBuilder(new UncheckedIOScalar<>(info::json).value())
-                        .add("size", val.size().get());
+                        .add(UpdateSlice.SIZE, val.size().get());
                 }
             )
         );

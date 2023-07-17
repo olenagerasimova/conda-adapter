@@ -25,6 +25,8 @@ import com.artipie.http.rt.SliceRoute;
 import com.artipie.http.slice.KeyFromPath;
 import com.artipie.http.slice.SliceDownload;
 import com.artipie.http.slice.SliceSimple;
+import com.artipie.scheduling.ArtifactEvent;
+import com.artipie.scheduling.EventQueue;
 import com.artipie.security.perms.Action;
 import com.artipie.security.perms.AdapterBasicPermission;
 import com.artipie.security.policy.Policy;
@@ -76,7 +78,25 @@ public final class CondaSlice extends Slice.Wrap {
      * @param url Application url
      */
     public CondaSlice(final Storage storage, final String url) {
-        this(storage, Policy.FREE, Authentication.ANONYMOUS, CondaSlice.ANONYMOUS, url, "*");
+        this(
+            storage, Policy.FREE, Authentication.ANONYMOUS, CondaSlice.ANONYMOUS,
+            url, "*", new EventQueue<>()
+        );
+    }
+
+    /**
+     * Ctor.
+     * @param storage Storage
+     * @param url Application url
+     * @param events Artifact events
+     */
+    public CondaSlice(
+        final Storage storage, final String url, final EventQueue<ArtifactEvent> events
+    ) {
+        this(
+            storage, Policy.FREE, Authentication.ANONYMOUS, CondaSlice.ANONYMOUS,
+            url, "*", events
+        );
     }
 
     /**
@@ -87,10 +107,12 @@ public final class CondaSlice extends Slice.Wrap {
      * @param tokens Tokens
      * @param url Application url
      * @param repo Repository name
+     * @param events Events queue
      * @checkstyle ParameterNumberCheck (5 lines)
      */
     public CondaSlice(final Storage storage, final Policy<?> policy, final Authentication users,
-        final Tokens tokens, final String url, final String repo) {
+        final Tokens tokens, final String url, final String repo,
+        final EventQueue<ArtifactEvent> events) {
         super(
             new SliceRoute(
                 new RtRulePath(
@@ -184,7 +206,7 @@ public final class CondaSlice extends Slice.Wrap {
                         new RtRule.ByPath("/?[a-z0-9-._]*/[a-z0-9-._]*/[a-z0-9-._]*(\\.tar\\.bz2|\\.conda)$"),
                         new ByMethodsRule(RqMethod.POST)
                     ),
-                    new UpdateSlice(storage)
+                    new UpdateSlice(storage, events, repo)
                 ),
                 new RtRulePath(new ByMethodsRule(RqMethod.HEAD), new SliceSimple(StandardRs.OK)),
                 new RtRulePath(
