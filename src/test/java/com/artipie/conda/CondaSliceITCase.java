@@ -82,10 +82,11 @@ public final class CondaSliceITCase {
         this.tmp = Files.createTempDirectory("conda-test");
         this.storage = new InMemoryStorage();
         this.port = new RandomFreePort().get();
+        this.events = new EventQueue<>();
         final String url = String.format("http://host.testcontainers.internal:%d", this.port);
         this.server = new VertxSliceServer(
             CondaSliceITCase.VERTX,
-            new LoggingSlice(new BodyLoggingSlice(new CondaSlice(this.storage, url))),
+            new LoggingSlice(new BodyLoggingSlice(new CondaSlice(this.storage, url, this.events))),
             this.port
         );
         this.server.start();
