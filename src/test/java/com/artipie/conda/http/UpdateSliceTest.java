@@ -17,6 +17,8 @@ import com.artipie.http.hm.SliceHasResponse;
 import com.artipie.http.rq.RequestLine;
 import com.artipie.http.rq.RqMethod;
 import com.artipie.http.rs.RsStatus;
+import com.artipie.scheduling.ArtifactEvent;
+import com.artipie.scheduling.EventQueue;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -45,13 +47,24 @@ class UpdateSliceTest {
     );
 
     /**
+     * Repository name.
+     */
+    private static final String RNAME = "my-repo";
+
+    /**
      * Test storage.
      */
     private Storage asto;
 
+    /**
+     * Artifact events.
+     */
+    private EventQueue<ArtifactEvent> events;
+
     @BeforeEach
     void init() {
         this.asto = new InMemoryStorage();
+        this.events = new EventQueue<>();
     }
 
     @ParameterizedTest
@@ -64,7 +77,7 @@ class UpdateSliceTest {
         final Key key = new Key.From("linux-64", name);
         MatcherAssert.assertThat(
             "Slice returned 201 CREATED",
-            new UpdateSlice(this.asto),
+            new UpdateSlice(this.asto, this.events, UpdateSliceTest.RNAME),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.CREATED),
                 new RequestLine(RqMethod.POST, String.format("/%s", key.string())),
@@ -86,6 +99,7 @@ class UpdateSliceTest {
             ),
             true
         );
+        MatcherAssert.assertThat("Package info was added to events queue", this.events.size() == 1);
     }
 
     @ParameterizedTest
@@ -103,7 +117,7 @@ class UpdateSliceTest {
         ).join();
         MatcherAssert.assertThat(
             "Slice returned 201 CREATED",
-            new UpdateSlice(this.asto),
+            new UpdateSlice(this.asto, this.events, UpdateSliceTest.RNAME),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.CREATED),
                 new RequestLine(RqMethod.POST, String.format("/%s", key.string())),
@@ -125,16 +139,20 @@ class UpdateSliceTest {
             ),
             true
         );
+        MatcherAssert.assertThat("Package info was added to events queue", this.events.size() == 1);
     }
 
     @Test
     void returnsBadRequestIfRequestLineIsIncorrect() {
         MatcherAssert.assertThat(
-            new UpdateSlice(this.asto),
+            new UpdateSlice(this.asto, this.events, UpdateSliceTest.RNAME),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.BAD_REQUEST),
                 new RequestLine(RqMethod.PUT, "/any")
             )
+        );
+        MatcherAssert.assertThat(
+            "Package info was not added to events queue", this.events.size() == 0
         );
     }
 
@@ -143,11 +161,14 @@ class UpdateSliceTest {
         final String key = "linux-64/test.conda";
         this.asto.save(new Key.From(key), Content.EMPTY).join();
         MatcherAssert.assertThat(
-            new UpdateSlice(this.asto),
+            new UpdateSlice(this.asto, this.events, UpdateSliceTest.RNAME),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.BAD_REQUEST),
                 new RequestLine(RqMethod.PUT, String.format("/%s", key))
             )
+        );
+        MatcherAssert.assertThat(
+            "Package info was not added to events queue", this.events.size() == 0
         );
     }
 
