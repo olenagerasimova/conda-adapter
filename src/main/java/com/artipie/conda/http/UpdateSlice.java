@@ -24,12 +24,13 @@ import com.artipie.http.rq.multipart.RqMultipart;
 import com.artipie.http.rs.RsStatus;
 import com.artipie.http.rs.RsWithStatus;
 import com.artipie.scheduling.ArtifactEvent;
-import com.artipie.scheduling.EventQueue;
 import io.reactivex.Flowable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.regex.Matcher;
@@ -74,7 +75,7 @@ public final class UpdateSlice implements Slice {
     /**
      * Artifacts events queue.
      */
-    private final EventQueue<ArtifactEvent> events;
+    private final Optional<Queue<ArtifactEvent>> events;
 
     /**
      * Repository name.
@@ -88,7 +89,7 @@ public final class UpdateSlice implements Slice {
      * @param events Artifact events
      * @param rname Repository name
      */
-    public UpdateSlice(final Storage asto, final EventQueue<ArtifactEvent> events,
+    public UpdateSlice(final Storage asto, final Optional<Queue<ArtifactEvent>> events,
         final String rname) {
         this.asto = asto;
         this.events = events;
@@ -124,28 +125,32 @@ public final class UpdateSlice implements Slice {
                                 .thenCompose(json -> this.addChecksum(temp, Digests.SHA256, json))
                                 .thenApply(JsonObjectBuilder::build)
                                 .thenCompose(
-                                    json -> new AstoMergedJson(
-                                        this.asto, new Key.From(matcher.group(2), "repodata.json")
-                                    ).merge(
-                                        // @checkstyle MagicNumberCheck (3 lines)
-                                        Collections.singletonMap(matcher.group(3), json)
-                                    ).thenCompose(
-                                        ignored ->
-                                            this.asto.move(temp, new Key.From(matcher.group(1)))
-                                    ).thenAccept(
-                                        nothing -> this.events.put(
-                                            new ArtifactEvent(
-                                                UpdateSlice.CONDA, this.rname,
-                                                new Login(new Headers.From(headers)).getValue(),
-                                                String.join(
-                                                    "_", json.getString("name"),
-                                                    json.getString("arch")
-                                                ),
-                                                json.getString("version"),
-                                                json.getJsonNumber(UpdateSlice.SIZE).longValue()
-                                            )
-                                        )
-                                    )
+                                    json -> {
+                                        //@checkstyle MagicNumberCheck (20 lines)
+                                        //@checkstyle LineLengthCheck (20 lines)
+                                        //@checkstyle NestedIfDepthCheck (20 lines)
+                                        CompletionStage<Void> action = new AstoMergedJson(
+                                            this.asto, new Key.From(matcher.group(2), "repodata.json")
+                                        ).merge(
+                                            Collections.singletonMap(matcher.group(3), json)
+                                        ).thenCompose(
+                                            ignored -> this.asto.move(temp, new Key.From(matcher.group(1)))
+                                        );
+                                        if (this.events.isPresent()) {
+                                            action = action.thenAccept(
+                                                nothing -> this.events.get().add(
+                                                    new ArtifactEvent(
+                                                        UpdateSlice.CONDA, this.rname,
+                                                        new Login(new Headers.From(headers)).getValue(),
+                                                        String.join("_", json.getString("name"), json.getString("arch")),
+                                                        json.getString("version"),
+                                                        json.getJsonNumber(UpdateSlice.SIZE).longValue()
+                                                    )
+                                                )
+                                            );
+                                        }
+                                        return action;
+                                    }
                                 ).thenApply(
                                     ignored -> new RsWithStatus(RsStatus.CREATED)
                                 );

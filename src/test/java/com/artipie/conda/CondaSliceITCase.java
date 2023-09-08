@@ -12,12 +12,13 @@ import com.artipie.conda.http.CondaSlice;
 import com.artipie.http.misc.RandomFreePort;
 import com.artipie.http.slice.LoggingSlice;
 import com.artipie.scheduling.ArtifactEvent;
-import com.artipie.scheduling.EventQueue;
 import com.artipie.vertx.VertxSliceServer;
 import com.jcabi.log.Logger;
 import io.vertx.reactivex.core.Vertx;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedList;
+import java.util.Queue;
 import org.apache.commons.io.FileUtils;
 import org.cactoos.list.ListOf;
 import org.hamcrest.MatcherAssert;
@@ -75,14 +76,14 @@ public final class CondaSliceITCase {
     /**
      * Artifact events.
      */
-    private EventQueue<ArtifactEvent> events;
+    private Queue<ArtifactEvent> events;
 
     @BeforeEach
     void initialize() throws Exception {
         this.tmp = Files.createTempDirectory("conda-test");
         this.storage = new InMemoryStorage();
         this.port = new RandomFreePort().get();
-        this.events = new EventQueue<>();
+        this.events = new LinkedList<>();
         final String url = String.format("http://host.testcontainers.internal:%d", this.port);
         this.server = new VertxSliceServer(
             CondaSliceITCase.VERTX,

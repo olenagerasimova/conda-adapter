@@ -18,10 +18,12 @@ import com.artipie.http.rq.RequestLine;
 import com.artipie.http.rq.RqMethod;
 import com.artipie.http.rs.RsStatus;
 import com.artipie.scheduling.ArtifactEvent;
-import com.artipie.scheduling.EventQueue;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
+import java.util.Optional;
+import java.util.Queue;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.IsEqual;
 import org.json.JSONException;
@@ -59,12 +61,12 @@ class UpdateSliceTest {
     /**
      * Artifact events.
      */
-    private EventQueue<ArtifactEvent> events;
+    private Queue<ArtifactEvent> events;
 
     @BeforeEach
     void init() {
         this.asto = new InMemoryStorage();
-        this.events = new EventQueue<>();
+        this.events = new LinkedList<>();
     }
 
     @ParameterizedTest
@@ -77,7 +79,7 @@ class UpdateSliceTest {
         final Key key = new Key.From("linux-64", name);
         MatcherAssert.assertThat(
             "Slice returned 201 CREATED",
-            new UpdateSlice(this.asto, this.events, UpdateSliceTest.RNAME),
+            new UpdateSlice(this.asto, Optional.of(this.events), UpdateSliceTest.RNAME),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.CREATED),
                 new RequestLine(RqMethod.POST, String.format("/%s", key.string())),
@@ -117,7 +119,7 @@ class UpdateSliceTest {
         ).join();
         MatcherAssert.assertThat(
             "Slice returned 201 CREATED",
-            new UpdateSlice(this.asto, this.events, UpdateSliceTest.RNAME),
+            new UpdateSlice(this.asto, Optional.of(this.events), UpdateSliceTest.RNAME),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.CREATED),
                 new RequestLine(RqMethod.POST, String.format("/%s", key.string())),
@@ -145,14 +147,14 @@ class UpdateSliceTest {
     @Test
     void returnsBadRequestIfRequestLineIsIncorrect() {
         MatcherAssert.assertThat(
-            new UpdateSlice(this.asto, this.events, UpdateSliceTest.RNAME),
+            new UpdateSlice(this.asto, Optional.of(this.events), UpdateSliceTest.RNAME),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.BAD_REQUEST),
                 new RequestLine(RqMethod.PUT, "/any")
             )
         );
         MatcherAssert.assertThat(
-            "Package info was not added to events queue", this.events.size() == 0
+            "Package info was not added to events queue", this.events.isEmpty()
         );
     }
 
@@ -161,14 +163,14 @@ class UpdateSliceTest {
         final String key = "linux-64/test.conda";
         this.asto.save(new Key.From(key), Content.EMPTY).join();
         MatcherAssert.assertThat(
-            new UpdateSlice(this.asto, this.events, UpdateSliceTest.RNAME),
+            new UpdateSlice(this.asto, Optional.of(this.events), UpdateSliceTest.RNAME),
             new SliceHasResponse(
                 new RsHasStatus(RsStatus.BAD_REQUEST),
                 new RequestLine(RqMethod.PUT, String.format("/%s", key))
             )
         );
         MatcherAssert.assertThat(
-            "Package info was not added to events queue", this.events.size() == 0
+            "Package info was not added to events queue", this.events.isEmpty()
         );
     }
 

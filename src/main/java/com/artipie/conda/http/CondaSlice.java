@@ -26,10 +26,11 @@ import com.artipie.http.slice.KeyFromPath;
 import com.artipie.http.slice.SliceDownload;
 import com.artipie.http.slice.SliceSimple;
 import com.artipie.scheduling.ArtifactEvent;
-import com.artipie.scheduling.EventQueue;
 import com.artipie.security.perms.Action;
 import com.artipie.security.perms.AdapterBasicPermission;
 import com.artipie.security.policy.Policy;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,7 +81,7 @@ public final class CondaSlice extends Slice.Wrap {
     public CondaSlice(final Storage storage, final String url) {
         this(
             storage, Policy.FREE, Authentication.ANONYMOUS, CondaSlice.ANONYMOUS,
-            url, "*", new EventQueue<>()
+            url, "*", Optional.empty()
         );
     }
 
@@ -91,11 +92,11 @@ public final class CondaSlice extends Slice.Wrap {
      * @param events Artifact events
      */
     public CondaSlice(
-        final Storage storage, final String url, final EventQueue<ArtifactEvent> events
+        final Storage storage, final String url, final Queue<ArtifactEvent> events
     ) {
         this(
             storage, Policy.FREE, Authentication.ANONYMOUS, CondaSlice.ANONYMOUS,
-            url, "*", events
+            url, "*", Optional.of(events)
         );
     }
 
@@ -112,7 +113,7 @@ public final class CondaSlice extends Slice.Wrap {
      */
     public CondaSlice(final Storage storage, final Policy<?> policy, final Authentication users,
         final Tokens tokens, final String url, final String repo,
-        final EventQueue<ArtifactEvent> events) {
+        final Optional<Queue<ArtifactEvent>> events) {
         super(
             new SliceRoute(
                 new RtRulePath(
