@@ -15,7 +15,6 @@ import com.artipie.http.auth.TokenAuthentication;
 import com.artipie.http.auth.Tokens;
 import com.artipie.http.misc.RandomFreePort;
 import com.artipie.http.slice.LoggingSlice;
-import com.artipie.scheduling.EventQueue;
 import com.artipie.security.policy.PolicyByUsername;
 import com.artipie.vertx.VertxSliceServer;
 import com.jcabi.log.Logger;
@@ -122,7 +121,7 @@ public final class CondaSliceAuthITCase {
                     new FakeAuthTokens(),
                     url,
                     "any",
-                    new EventQueue<>()
+                    Optional.empty()
                 )
             ),
             this.port
