@@ -17,8 +17,8 @@ import com.jcabi.log.Logger;
 import io.vertx.reactivex.core.Vertx;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import org.apache.commons.io.FileUtils;
 import org.cactoos.list.ListOf;
 import org.hamcrest.MatcherAssert;
@@ -83,7 +83,7 @@ public final class CondaSliceITCase {
         this.tmp = Files.createTempDirectory("conda-test");
         this.storage = new InMemoryStorage();
         this.port = new RandomFreePort().get();
-        this.events = new LinkedList<>();
+        this.events = new ConcurrentLinkedDeque<>();
         final String url = String.format("http://host.testcontainers.internal:%d", this.port);
         this.server = new VertxSliceServer(
             CondaSliceITCase.VERTX,
